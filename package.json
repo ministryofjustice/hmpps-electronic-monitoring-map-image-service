@@ -1,8 +1,8 @@
 {
-  "name": "hmpps-template-typescript",
+  "name": "hmpps-electronic-monitoring-map-image-service",
   "version": "0.0.1",
-  "description": "HMPPS Typescript Template",
-  "repository": "git@github.com:ministryofjustice/hmpps-template-typescript.git",
+  "description": "HMPPS Electronic Monitoring Map Image Service",
+  "repository": "git@github.com:ministryofjustice/hmpps-electronic-monitoring-map-image-service.git",
   "license": "MIT",
   "scripts": {
     "prepare": "hmpps-precommit-hooks-prepare",
