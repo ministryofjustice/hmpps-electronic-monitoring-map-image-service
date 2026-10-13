@@ -5,13 +5,12 @@ generic-service:
   replicaCount: 2
 
   ingress:
-    host: electronic-monitoring-map-image-service-preprod.hmpps.service.justice.gov.uk
+    host: hmpps-em-map-image-service-preprod.hmpps.service.justice.gov.uk
 
   env:
-    INGRESS_URL: "https://electronic-monitoring-map-image-service-preprod.hmpps.service.justice.gov.uk"
+    INGRESS_URL: "https://hmpps-em-map-image-service-preprod.hmpps.service.justice.gov.uk"
     HMPPS_AUTH_URL: "https://sign-in-preprod.hmpps.service.justice.gov.uk/auth"
     TOKEN_VERIFICATION_API_URL: "https://token-verification-api-preprod.prison.service.justice.gov.uk"
-    EXAMPLE_API_URL: 'https://template-kotlin-preprod.hmpps.service.justice.gov.uk'
     ENVIRONMENT_NAME: PRE-PRODUCTION
 
   scheduledDowntime:

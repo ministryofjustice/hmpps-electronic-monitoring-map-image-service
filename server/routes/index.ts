@@ -9,7 +9,7 @@ export enum Page {
 }
 
 export default function routes(services: Services): Router {
-  const { auditService, exampleService } = services
+  const { auditService } = services
   const router = Router()
 
   router.get('/', async (req, res, _next) => {
@@ -18,8 +18,7 @@ export default function routes(services: Services): Router {
       correlationId: req.id,
     })
 
-    const currentTime = await exampleService.getCurrentTime()
-    return res.render('pages/index', { currentTime })
+    return res.render('pages/index')
   })
 
   // Example of an audited route.
