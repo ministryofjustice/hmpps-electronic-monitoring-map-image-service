@@ -43,6 +43,18 @@ const getBuildConfig = () => {
       ],
       clear: globSync([path.join(cwd, 'dist/assets/{css,js}')]),
     },
+
+    map: {
+      outDir: path.join(cwd, 'dist/assets/map'),
+      entryPoints: [path.join(cwd, 'assets/map/map.ts')],
+      copy: [
+        {
+          from: path.join(cwd, 'assets/map/map.{html,css}'),
+          to: path.join(cwd, 'dist/assets/map'),
+          watch: isWatchMode,
+        },
+      ],
+    },
   }
 }
 
