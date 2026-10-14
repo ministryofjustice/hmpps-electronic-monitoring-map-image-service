@@ -25,6 +25,15 @@ generic-service:
     httpGet:
       path: /ping
 
+  # Going to try with double our resource requests and limits for Chromium
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
   # Environment variables to load into the deployment
   env:
     NODE_ENV: 'production'
