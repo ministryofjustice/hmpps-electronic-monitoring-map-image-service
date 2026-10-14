@@ -29,6 +29,14 @@ const auditConfig = (): AuditClientConfig => {
   }
 }
 
+const playwrightConfig = () => {
+  const chromiumExecutablePath = get('CHROMIUM_EXECUTABLE_PATH', '')
+
+  return {
+    chromiumExecutablePath: chromiumExecutablePath === '' ? undefined : chromiumExecutablePath,
+  }
+}
+
 export default {
   buildNumber: get('BUILD_NUMBER', '1_0_0', requiredInProduction),
   productId: get('PRODUCT_ID', 'UNASSIGNED', requiredInProduction),
@@ -79,4 +87,5 @@ export default {
   },
   ingressUrl: get('INGRESS_URL', 'http://localhost:3000', requiredInProduction),
   environmentName: get('ENVIRONMENT_NAME', ''),
+  playwright: playwrightConfig(),
 }

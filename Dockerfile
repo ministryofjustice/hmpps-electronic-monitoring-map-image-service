@@ -34,6 +34,11 @@ ARG BUILD_NUMBER
 ARG GIT_REF
 ARG GIT_BRANCH
 
+# Chromium is used by playwright for capturing screenshots
+ENV CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+RUN apk add --no-cache \
+        chromium
+
 COPY --from=build --chown=appuser:appgroup \
         /app/package.json \
         /app/package-lock.json \
