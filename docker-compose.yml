@@ -41,6 +41,8 @@ services:
       - TOKEN_VERIFICATION_API_URL=http://hmpps-auth:8080/auth
       - TOKEN_VERIFICATION_ENABLED=false
       - INGRESS_URL=http://localhost:3000
+      - OS_MAPS_API_KEY=UNASSIGNED
+      - OS_MAPS_API_SECRET=UNASSIGNED
       - NO_HTTPS=true
 
 networks:

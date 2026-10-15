@@ -1,8 +1,10 @@
 import express from 'express'
 import { telemetryMiddleware } from '@ministryofjustice/hmpps-azure-telemetry'
+import { emOrdnanceSurveyAuth } from '@ministryofjustice/hmpps-electronic-monitoring-components/map/ordnance-survey-auth'
 
 import createError from 'http-errors'
 
+import config from './config'
 import nunjucksSetup from './utils/nunjucksSetup'
 import errorHandler from './errorHandler'
 import authorisationMiddleware from './middleware/authorisationMiddleware'
@@ -25,6 +27,10 @@ export default function createApp(services: Services): express.Application {
   app.set('json spaces', 2)
   app.set('trust proxy', true)
   app.set('port', process.env.PORT || 3000)
+
+  // Proxies OS Maps style, tiles and assets for the map page, keeping the OS key server-side.
+  // Mounted before auth so Playwright can load it without tokens; access is limited by the ingress allowlist.
+  app.use(emOrdnanceSurveyAuth({ apiKey: config.maps.apiKey, apiSecret: config.maps.apiSecret }))
 
   app.use(setUpHealthChecks(services.applicationInfo))
   app.use(setUpWebSecurity())
