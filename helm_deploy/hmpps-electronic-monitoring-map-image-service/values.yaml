@@ -64,6 +64,9 @@ generic-service:
       REDIS_AUTH_TOKEN: 'auth_token'
     hmpps-electronic-monitoring-map-image-service-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+    hmpps-electronic-monitoring-map-image-service-os-maps:
+      OS_MAPS_API_KEY: 'OS_MAPS_API_KEY'
+      OS_MAPS_API_SECRET: 'OS_MAPS_API_SECRET'
     # This secret will need to be created in your namespace if you add audit integration
     # IRSA configuration in your namespace will also be required.
     # sqs-hmpps-audit-secret:
