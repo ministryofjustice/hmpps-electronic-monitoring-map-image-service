@@ -2,8 +2,8 @@ const { copy } = require('esbuild-plugin-copy')
 const { buildNotificationPlugin } = require('./utils')
 
 /**
- * Build the map bundle with unhashed names, so the static map.html can reference a fixed filename,
- * and copy that page and its stylesheet alongside it
+ * Build the map bundle with unhashed names, so the map page can reference a fixed filename,
+ * and copy its stylesheet alongside it
  */
 const getMapConfig = buildConfig => ({
   entryPoints: buildConfig.map.entryPoints,
