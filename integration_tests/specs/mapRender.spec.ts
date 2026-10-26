@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { imageSize } from 'image-size'
 import ordnanceSurvey from '../mockApis/ordnanceSurvey'
 import { resetStubs } from '../mockApis/wiremock'
 import mapRenderSchema from '../../server/schemas/mapRender'
@@ -15,24 +16,6 @@ const points = [
   { latitude: 51.51, longitude: -0.1 },
   { latitude: 51.52, longitude: -0.09 },
 ]
-
-const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47])
-const JPEG_SIGNATURE = Buffer.from([0xff, 0xd8, 0xff])
-
-const pngSize = (image: Buffer) => ({ width: image.readUInt32BE(16), height: image.readUInt32BE(20) })
-
-// Walks the JPEG segments until the start-of-frame marker, which holds the dimensions
-const jpegSize = (image: Buffer) => {
-  let offset = 2
-  while (offset < image.length) {
-    const marker = image[offset + 1]
-    if (marker >= 0xc0 && marker <= 0xc3) {
-      return { width: image.readUInt16BE(offset + 7), height: image.readUInt16BE(offset + 5) }
-    }
-    offset += 2 + image.readUInt16BE(offset + 2)
-  }
-  throw new Error('No JPEG start-of-frame marker found')
-}
 
 test.describe('Map render', () => {
   test.beforeEach(async () => {
@@ -51,8 +34,7 @@ test.describe('Map render', () => {
     const { image, contentType } = await render({ layers: [{ type: 'locations', id: 'l', points }] })
 
     expect(contentType).toBe('image/jpeg')
-    expect(image.subarray(0, 3)).toEqual(JPEG_SIGNATURE)
-    expect(jpegSize(image)).toEqual({ width: 800, height: 600 })
+    expect(imageSize(image)).toMatchObject({ type: 'jpg', width: 800, height: 600 })
   })
 
   test('renders a png at the requested size and pixel ratio', async () => {
@@ -62,8 +44,7 @@ test.describe('Map render', () => {
     })
 
     expect(contentType).toBe('image/png')
-    expect(image.subarray(0, 4)).toEqual(PNG_SIGNATURE)
-    expect(pngSize(image)).toEqual({ width: 800, height: 600 })
+    expect(imageSize(image)).toMatchObject({ type: 'png', width: 800, height: 600 })
   })
 
   test('draws each layer type', async () => {
@@ -129,7 +110,7 @@ test.describe('Map render', () => {
   test('renders an explicit viewport with no layers', async () => {
     const { image } = await render({ viewport: { mode: 'explicit', centre: points[0], zoom: 12 } })
 
-    expect(image.subarray(0, 3)).toEqual(JPEG_SIGNATURE)
+    expect(imageSize(image).type).toBe('jpg')
   })
 
   test('includes the attribution when supplied', async () => {

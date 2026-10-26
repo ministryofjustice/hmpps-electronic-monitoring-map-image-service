@@ -32,7 +32,8 @@ const screenshotMapElement = async (page: Page, format: 'jpeg' | 'png', quality?
 }
 
 // Hand the presented data model to the client script and wait for the map to finish rendering.
-// page.evaluate ignores the page default timeout, so a render that never completes is raced against our own.
+// Playwright's page timeouts don't apply to page.evaluate, so a render that never finishes would hang forever.
+// We race it against our own timer so it fails after timeoutMs instead.
 const renderMapInPage = async (page: Page, model: MapRenderModel, timeoutMs: number): Promise<void> => {
   let timer: NodeJS.Timeout | undefined
   const timeout = new Promise<never>((_, reject) => {
