@@ -57,8 +57,13 @@ describe('presentMapRender', () => {
       parse({
         output: { width: 800, height: 600, format: 'png' },
         layers: [
-          { type: 'tracks', id: 'solid', points: [point], style: { stroke: { color: '#ff0000' } } },
-          { type: 'tracks', id: 'dashed', points: [point], style: { stroke: { color: '#00ff00', lineDash: [8, 4] } } },
+          { type: 'tracks', id: 'solid', points: [point, point], style: { stroke: { color: '#ff0000' } } },
+          {
+            type: 'tracks',
+            id: 'dashed',
+            points: [point, point],
+            style: { stroke: { color: '#00ff00', lineDash: [8, 4] } },
+          },
         ],
       }),
     )
@@ -133,5 +138,29 @@ describe('presentMapRender', () => {
     })
     expect(model.layers[0].options.positions?.[0]).toMatchObject({ label: '1' })
     expect(model.fonts).toEqual(['bold 18px "GDS Transport", system-ui, sans-serif'])
+  })
+
+  it('has no attribution when it is omitted', () => {
+    const model = presentMapRender(parse({ layers: [{ type: 'locations', id: 'l', points: [point] }] }))
+
+    expect(model.attribution).toBeUndefined()
+  })
+
+  it('passes the attribution text through', () => {
+    const model = presentMapRender(
+      parse({ output: { attribution: 'Contains OS data' }, layers: [{ type: 'locations', id: 'l', points: [point] }] }),
+    )
+
+    expect(model.attribution).toBe('Contains OS data')
+  })
+
+  it('presents a line with a default colour and no dash', () => {
+    const model = presentMapRender(parse({ layers: [{ type: 'lines', id: 'line', points: [point, point] }] }))
+
+    expect(model.layers[0]).toMatchObject({
+      type: 'lines',
+      options: { id: 'line', visible: true, style: { stroke: { color: '#1d70b8' } } },
+    })
+    expect(model.fonts).toEqual([])
   })
 })

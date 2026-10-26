@@ -210,4 +210,47 @@ describe('mapRenderSchema', () => {
     expect(result.success).toBe(false)
     expect(result.error?.issues[0].path).toEqual(['layers'])
   })
+
+  describe('attribution', () => {
+    it.each([
+      ['omitted', undefined],
+      ['text', 'Contains OS data'],
+    ])('accepts attribution when it is %s', (_name, attribution) => {
+      expect(mapRenderSchema.safeParse({ ...validRequest(), output: { attribution } }).success).toBe(true)
+    })
+
+    it.each([
+      ['empty', '  '],
+      ['too long', 'a'.repeat(201)],
+      ['an object', { text: 'Contains OS data' }],
+      ['false', false],
+    ])('rejects attribution when it is %s', (_name, attribution) => {
+      expect(mapRenderSchema.safeParse({ ...validRequest(), output: { attribution } }).success).toBe(false)
+    })
+  })
+
+  describe('lines and tracks', () => {
+    const twoPoints = [
+      { latitude: 51.5, longitude: -0.1 },
+      { latitude: 51.6, longitude: -0.2 },
+    ]
+
+    it('accepts a line with a colour', () => {
+      const layers = [{ type: 'lines', id: 'l', points: twoPoints, style: { stroke: { color: '#11dd77' } } }]
+
+      expect(mapRenderSchema.safeParse({ layers }).success).toBe(true)
+    })
+
+    it.each(['lines', 'tracks'])('rejects a %s layer with a single point', type => {
+      const layers = [{ type, id: 'l', points: [twoPoints[0]] }]
+
+      expect(mapRenderSchema.safeParse({ layers }).success).toBe(false)
+    })
+
+    it('rejects lineDash on a line, as the component only supports it on tracks', () => {
+      const layers = [{ type: 'lines', id: 'l', points: twoPoints, style: { stroke: { lineDash: [4, 2] } } }]
+
+      expect(mapRenderSchema.safeParse({ layers }).success).toBe(false)
+    })
+  })
 })

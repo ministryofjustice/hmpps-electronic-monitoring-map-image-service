@@ -1,6 +1,7 @@
 import type { Position } from '@ministryofjustice/hmpps-electronic-monitoring-components/map'
 import type {
   CirclesLayerOptions,
+  LinesLayerOptions,
   LocationsLayerOptions,
   TextLayerOptions,
   TracksLayerOptions,
@@ -20,6 +21,7 @@ const UNUSED_PRECISION = 0
 
 export type PresentedLayer =
   | { type: 'tracks'; options: TracksLayerOptions }
+  | { type: 'lines'; options: LinesLayerOptions }
   | { type: 'circles'; options: CirclesLayerOptions }
   | { type: 'locations'; options: LocationsLayerOptions }
   | { type: 'text'; options: TextLayerOptions }
@@ -37,6 +39,7 @@ export type MapRenderModel = {
     | { mode: 'explicit'; centre: { latitude: number; longitude: number }; zoom: number }
   layers: PresentedLayer[]
   fonts: string[]
+  attribution?: string
 }
 
 type StrokeDefaults = { color: string; width: number; lineDash?: number[] }
@@ -68,6 +71,16 @@ const presentLayer = (layer: MapRenderLayer, index: number): PresentedLayer => {
               ...(layer.style?.stroke?.lineDash ? { lineDash: layer.style.stroke.lineDash } : {}),
             },
           },
+        },
+      }
+
+    case 'lines':
+      return {
+        type: 'lines',
+        options: {
+          ...common,
+          positions: presentPositions(layer.points),
+          style: { stroke: { color: layer.style?.stroke?.color ?? DEFAULT_BLUE } },
         },
       }
 
@@ -170,6 +183,7 @@ const presentMapRender = ({ output = {}, viewport, layers }: MapRenderRequest): 
     viewport: presentViewport(viewport),
     layers: presentedLayers,
     fonts,
+    ...(output.attribution ? { attribution: output.attribution } : {}),
   }
 }
 

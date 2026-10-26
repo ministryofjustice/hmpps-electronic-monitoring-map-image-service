@@ -6,6 +6,7 @@ export const MAX_TOTAL_POINTS = 10_000
 export const MIN_OUTPUT_PX = 100
 export const MAX_OUTPUT_PX = 2000
 export const MAX_PIXEL_RATIO = 2
+export const MAX_ATTRIBUTION_LENGTH = 200
 // Caps Chromium's memory use, counting pixelRatio (e.g. 1200x650 at 2x is about 3.1M).
 export const MAX_RENDERED_PIXELS = 4_000_000
 
@@ -40,19 +41,29 @@ const textPointSchema = pointSchema.extend({
   label: z.string().trim().min(1).max(100),
 })
 
-const pointsOf = <T extends z.ZodType>(point: T) => z.array(point).min(1).max(MAX_POINTS_PER_LAYER)
+const pointsOf = <T extends z.ZodType>(point: T, min = 1) => z.array(point).min(min).max(MAX_POINTS_PER_LAYER)
+
+// A line needs two points to have a segment
+const MIN_LINE_POINTS = 2
 
 const layerIdSchema = z.string().trim().min(1).max(64)
 
 const tracksLayerSchema = z.strictObject({
   type: z.literal('tracks'),
   id: layerIdSchema,
-  points: pointsOf(pointSchema),
+  points: pointsOf(pointSchema, MIN_LINE_POINTS),
   style: z
     .strictObject({
       stroke: z.strictObject({ color: colourSchema.optional(), lineDash: lineDashSchema.optional() }).optional(),
     })
     .optional(),
+})
+
+const linesLayerSchema = z.strictObject({
+  type: z.literal('lines'),
+  id: layerIdSchema,
+  points: pointsOf(pointSchema, MIN_LINE_POINTS),
+  style: z.strictObject({ stroke: z.strictObject({ color: colourSchema.optional() }).optional() }).optional(),
 })
 
 const circlesLayerSchema = z.strictObject({
@@ -104,10 +115,14 @@ const textLayerSchema = z.strictObject({
 
 const layerSchema = z.discriminatedUnion('type', [
   tracksLayerSchema,
+  linesLayerSchema,
   circlesLayerSchema,
   locationsLayerSchema,
   textLayerSchema,
 ])
+
+// Shown only when the caller supplies the wording; there is no default text.
+const attributionSchema = z.string().trim().min(1).max(MAX_ATTRIBUTION_LENGTH)
 
 const outputSchema = z
   .strictObject({
@@ -116,6 +131,7 @@ const outputSchema = z
     format: z.enum(['jpeg', 'png']).optional(),
     quality: z.int().min(1).max(100).optional(),
     pixelRatio: z.number().min(1).max(MAX_PIXEL_RATIO).optional(),
+    attribution: attributionSchema.optional(),
   })
   .refine(output => output.format !== 'png' || output.quality === undefined, {
     message: 'quality only applies to jpeg',
