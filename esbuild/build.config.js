@@ -49,7 +49,7 @@ const getBuildConfig = () => {
       entryPoints: [path.join(cwd, 'assets/map/map.ts')],
       copy: [
         {
-          from: path.join(cwd, 'assets/map/map.{html,css}'),
+          from: path.join(cwd, 'assets/map/map.css'),
           to: path.join(cwd, 'dist/assets/map'),
           watch: isWatchMode,
         },
