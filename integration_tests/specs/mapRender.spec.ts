@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { imageSize } from 'image-size'
+import { fromLonLat } from 'ol/proj'
 import ordnanceSurvey from '../mockApis/ordnanceSurvey'
 import { resetStubs } from '../mockApis/wiremock'
 import presentMapRender from '../../server/presenters/mapRender'
@@ -161,10 +162,7 @@ test.describe('Map render', () => {
         return map.getView().calculateExtent(map.getSize())
       }, model)
 
-      // Spherical mercator metres, which are larger than ground metres at this latitude, so this is a lenient bound
-      const earthRadius = 6378137
-      const x = (centre.longitude * Math.PI * earthRadius) / 180
-      const y = earthRadius * Math.log(Math.tan(Math.PI / 4 + (centre.latitude * Math.PI) / 360))
+      const [x, y] = fromLonLat([centre.longitude, centre.latitude])
       const [minX, minY, maxX, maxY] = extent
 
       expect(minX).toBeLessThanOrEqual(x - radiusMetres)
