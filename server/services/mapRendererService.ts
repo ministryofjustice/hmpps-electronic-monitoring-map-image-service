@@ -1,4 +1,5 @@
 import type { Page } from 'playwright'
+import createError from 'http-errors'
 import logger from '../../logger'
 import config from '../config'
 import presentMapRender, { type MapRenderModel } from '../presenters/mapRender'
@@ -37,7 +38,7 @@ const screenshotMapElement = async (page: Page, format: 'jpeg' | 'png', quality?
 const renderMapInPage = async (page: Page, model: MapRenderModel, timeoutMs: number): Promise<void> => {
   let timer: NodeJS.Timeout | undefined
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`Map render did not complete within ${timeoutMs}ms`)), timeoutMs)
+    timer = setTimeout(() => reject(createError(504, `Map render did not complete within ${timeoutMs}ms`)), timeoutMs)
   })
 
   const render = page.evaluate(async renderModel => {
