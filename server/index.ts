@@ -1,6 +1,5 @@
 import createApp from './app'
-import { services } from './services'
+import { services as createServices } from './services'
 
-const app = createApp(services())
-
-export default app
+export const services = createServices()
+export const app = createApp(services)
