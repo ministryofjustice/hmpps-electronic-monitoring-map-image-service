@@ -12,6 +12,7 @@ import authorisationMiddleware from './middleware/authorisationMiddleware'
 import setUpAuthentication from './middleware/setUpAuthentication'
 import setUpCsrf from './middleware/setUpCsrf'
 import setUpCurrentUser from './middleware/setUpCurrentUser'
+import setUpMapImage from './middleware/setUpMapImage'
 import setUpMapPage from './middleware/setUpMapPage'
 import setUpHealthChecks from './middleware/setUpHealthChecks'
 import setUpStaticResources from './middleware/setUpStaticResources'
@@ -34,6 +35,9 @@ export default function createApp(services: Services): express.Application {
   app.use(emOrdnanceSurveyAuth({ apiKey: config.maps.apiKey, apiSecret: config.maps.apiSecret }))
 
   app.use(setUpHealthChecks(services.applicationInfo))
+  // Unauthenticated API for other services, so it sits outside the session and login chain.
+  // Access is limited by the ingress allowlist.
+  app.use(setUpMapImage(services.mapRendererService))
   app.use(setUpWebSecurity())
   app.use(setUpWebSession())
   app.use(setUpWebRequestParsing())
