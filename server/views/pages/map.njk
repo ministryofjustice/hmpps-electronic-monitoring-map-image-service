@@ -1,3 +1,4 @@
+{% from "em-map/macro.njk" import emMap %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -8,6 +9,15 @@
     <script type="module" src="/assets/map/map.js"></script>
   </head>
   <body>
-    <em-map csp-nonce="{{ cspNonce }}" zoom-control="false" rotate-control="false"></em-map>
+    {{
+      emMap({
+        cspNonce: cspNonce,
+        controls: {
+          zoomControl: false,
+          rotateControl: false,
+          grabCursor: false
+        }
+      })
+    }}
   </body>
 </html>
