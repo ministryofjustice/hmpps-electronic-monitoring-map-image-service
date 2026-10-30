@@ -71,7 +71,10 @@ describe('MapRendererService', () => {
     const browserService = { getBrowser: jest.fn().mockResolvedValue(browser) } as unknown as PlaywrightBrowserService
     const service = new MapRendererService(browserService, 'http://map.test', 20)
 
-    await expect(service.render(request)).rejects.toThrow('Map render did not complete within 20ms')
+    await expect(service.render(request)).rejects.toMatchObject({
+      status: 504,
+      message: 'Map render did not complete within 20ms',
+    })
     expect(mapElement.screenshot).not.toHaveBeenCalled()
     expect(context.close).toHaveBeenCalledTimes(1)
   })
