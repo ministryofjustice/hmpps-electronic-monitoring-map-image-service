@@ -187,4 +187,38 @@ test.describe('Map render', () => {
 
     expect(withText.image.equals(without.image)).toBe(false)
   })
+
+  test('moves a label away from its point when an offset is given', async () => {
+    const base = { output: { format: 'png' }, viewport: { mode: 'explicit', centre: points[0], zoom: 14 } }
+    const label = (style?: unknown) => ({
+      type: 'text',
+      id: 't',
+      points: [{ ...points[0], label: 'Burglary' }],
+      style,
+    })
+    const overlapping = await render({ ...base, layers: [label()] })
+    const offset = await render({ ...base, layers: [label({ offset: { x: 0, y: 20 } })] })
+
+    expect(offset.image.equals(overlapping.image)).toBe(false)
+  })
+
+  test('shows the compass and scale bar by default and hides them on request', async () => {
+    const base = { output: { format: 'png' }, viewport: { mode: 'explicit', centre: points[0], zoom: 14 } }
+    const defaults = await render(base)
+    const hidden = await render({ ...base, controls: { compass: false, scaleBar: false } })
+    const compassOnly = await render({ ...base, controls: { scaleBar: false } })
+    const scaleOnly = await render({ ...base, controls: { compass: false } })
+
+    expect(hidden.image.equals(defaults.image)).toBe(false)
+    expect(compassOnly.image.equals(hidden.image)).toBe(false)
+    expect(scaleOnly.image.equals(hidden.image)).toBe(false)
+  })
+
+  test('draws the scale as a line when requested', async () => {
+    const base = { output: { format: 'png' }, viewport: { mode: 'explicit', centre: points[0], zoom: 14 } }
+    const bar = await render(base)
+    const line = await render({ ...base, controls: { scaleBar: 'line' } })
+
+    expect(line.image.equals(bar.image)).toBe(false)
+  })
 })
