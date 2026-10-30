@@ -135,6 +135,10 @@ const textLayerSchema = z.strictObject({
       haloColor: colourSchema.optional(),
       haloWidth: z.number().min(0).max(20).optional(),
       size: z.number().min(6).max(72).optional(),
+      // Pixels from the point; positive y moves the label down. Keeps a label from covering its marker.
+      offset: z
+        .strictObject({ x: z.number().min(-500).max(500).optional(), y: z.number().min(-500).max(500).optional() })
+        .optional(),
     })
     .optional(),
 })

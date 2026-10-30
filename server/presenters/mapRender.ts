@@ -175,7 +175,7 @@ const presentLayer = (layer: MapRenderLayer, index: number): PresentedLayer => {
               haloWidth > 0
                 ? { color: layer.style?.haloColor ?? '#ffffff', width: haloWidth }
                 : { color: 'rgba(0, 0, 0, 0)', width: 1 },
-            offset: { x: 0, y: 0 },
+            offset: { x: layer.style?.offset?.x ?? 0, y: layer.style?.offset?.y ?? 0 },
             textAlign: 'center',
           },
         },

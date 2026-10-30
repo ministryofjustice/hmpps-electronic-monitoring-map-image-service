@@ -306,6 +306,24 @@ describe('mapRenderSchema', () => {
     })
   })
 
+  describe('text offset', () => {
+    const textLayers = (offset: unknown) => [
+      { type: 'text', id: 't', points: [{ latitude: 51.5, longitude: -0.1, label: 'A' }], style: { offset } },
+    ]
+
+    it('accepts an offset in pixels', () => {
+      expect(mapRenderSchema.safeParse({ layers: textLayers({ x: 0, y: 20 }) }).success).toBe(true)
+    })
+
+    it.each([
+      ['out of range', { y: 501 }],
+      ['not a number', { y: '20' }],
+      ['unknown key', { z: 1 }],
+    ])('rejects an offset that is %s', (_name, offset) => {
+      expect(mapRenderSchema.safeParse({ layers: textLayers(offset) }).success).toBe(false)
+    })
+  })
+
   describe('lines and tracks', () => {
     const twoPoints = [
       { latitude: 51.5, longitude: -0.1 },
