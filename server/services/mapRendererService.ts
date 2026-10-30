@@ -4,6 +4,7 @@ import logger from '../../logger'
 import config from '../config'
 import presentMapRender, { type MapRenderModel } from '../presenters/mapRender'
 import type { MapRenderRequest } from '../schemas/mapRender'
+import { toMapPageQuery } from '../schemas/mapPageControls'
 import type PlaywrightBrowserService from './playwrightBrowserService'
 
 export type MapImage = {
@@ -83,7 +84,7 @@ export default class MapRendererService {
       page.setDefaultTimeout(this.timeoutMs)
       page.setDefaultNavigationTimeout(this.timeoutMs)
 
-      await page.goto(`${this.baseUrl}${MAP_PATH}`, { waitUntil: 'domcontentloaded' })
+      await page.goto(`${this.baseUrl}${MAP_PATH}?${toMapPageQuery(model.controls)}`, { waitUntil: 'domcontentloaded' })
       await renderMapInPage(page, model, this.timeoutMs)
       logStep('render:pageReady')
 

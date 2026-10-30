@@ -348,4 +348,19 @@ describe('mapRenderSchema', () => {
       expect(mapRenderSchema.safeParse({ layers }).success).toBe(false)
     })
   })
+
+  describe('controls', () => {
+    const layers = [{ type: 'locations', id: 'a', points: [{ latitude: 51.5, longitude: -0.1 }] }]
+
+    it.each([{}, { compass: false }, { scaleBar: 'line' }, { scaleBar: false }, { compass: true, scaleBar: 'bar' }])(
+      'accepts %j',
+      controls => {
+        expect(mapRenderSchema.safeParse({ layers, controls }).success).toBe(true)
+      },
+    )
+
+    it.each([{ compass: 'yes' }, { scaleBar: true }, { scaleBar: 'huge' }, { zoom: true }])('rejects %j', controls => {
+      expect(mapRenderSchema.safeParse({ layers, controls }).success).toBe(false)
+    })
+  })
 })
