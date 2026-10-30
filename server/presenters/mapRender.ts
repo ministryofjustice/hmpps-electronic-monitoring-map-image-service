@@ -8,6 +8,7 @@ import type {
 } from '@ministryofjustice/hmpps-electronic-monitoring-components/map/layers'
 import type { MapRenderLayer, MapRenderRequest } from '../schemas/mapRender'
 import {
+  DEFAULT_CONTROLS,
   DEFAULT_EXTENSION_METRES,
   DEFAULT_HEIGHT_PX,
   DEFAULT_PADDING_PX,
@@ -45,6 +46,7 @@ export type MapRenderModel = {
     | { mode: 'fit'; layerIds: string[]; padding: number; maxZoom: number }
     | { mode: 'explicit'; centre: { latitude: number; longitude: number }; zoom: number }
   layers: PresentedLayer[]
+  controls: { compass: boolean; scaleBar: 'bar' | 'line' | false }
   fonts: string[]
   attribution?: string
 }
@@ -175,7 +177,7 @@ const presentLayer = (layer: MapRenderLayer, index: number): PresentedLayer => {
               haloWidth > 0
                 ? { color: layer.style?.haloColor ?? '#ffffff', width: haloWidth }
                 : { color: 'rgba(0, 0, 0, 0)', width: 1 },
-            offset: { x: 0, y: 0 },
+            offset: { x: layer.style?.offset?.x ?? 0, y: layer.style?.offset?.y ?? 0 },
             textAlign: 'center',
           },
         },
@@ -203,7 +205,7 @@ const presentViewport = (
   }
 }
 
-const presentMapRender = ({ output = {}, viewport, layers }: MapRenderRequest): MapRenderModel => {
+const presentMapRender = ({ output = {}, viewport, layers, controls = {} }: MapRenderRequest): MapRenderModel => {
   const format = output.format ?? DEFAULT_FORMAT
   const presentedLayers = layers.map(presentLayer)
 
@@ -225,6 +227,10 @@ const presentMapRender = ({ output = {}, viewport, layers }: MapRenderRequest): 
     },
     viewport: presentViewport(viewport, layers),
     layers: presentedLayers,
+    controls: {
+      compass: controls.compass ?? DEFAULT_CONTROLS.compass,
+      scaleBar: controls.scaleBar ?? DEFAULT_CONTROLS.scaleBar,
+    },
     fonts,
     ...(output.attribution ? { attribution: output.attribution } : {}),
   }

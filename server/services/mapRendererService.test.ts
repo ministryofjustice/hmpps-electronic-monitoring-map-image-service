@@ -37,7 +37,9 @@ describe('MapRendererService', () => {
 
     expect(browser.newContext).toHaveBeenCalledWith({ viewport: { width: 1200, height: 650 }, deviceScaleFactor: 1.2 })
     expect(page.setDefaultTimeout).toHaveBeenCalledWith(30_000)
-    expect(page.goto).toHaveBeenCalledWith('http://map.test/map', { waitUntil: 'domcontentloaded' })
+    expect(page.goto).toHaveBeenCalledWith('http://map.test/map?compass=true&scaleBar=bar', {
+      waitUntil: 'domcontentloaded',
+    })
     expect(page.evaluate).toHaveBeenCalledWith(
       expect.any(Function),
       expect.objectContaining({ layers: [expect.objectContaining({ type: 'locations' })] }),

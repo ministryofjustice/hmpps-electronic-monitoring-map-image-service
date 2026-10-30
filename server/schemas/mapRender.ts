@@ -135,6 +135,10 @@ const textLayerSchema = z.strictObject({
       haloColor: colourSchema.optional(),
       haloWidth: z.number().min(0).max(20).optional(),
       size: z.number().min(6).max(72).optional(),
+      // Pixels from the point; positive y moves the label down. Keeps a label from covering its marker.
+      offset: z
+        .strictObject({ x: z.number().min(-500).max(500).optional(), y: z.number().min(-500).max(500).optional() })
+        .optional(),
     })
     .optional(),
 })
@@ -178,6 +182,13 @@ const explicitViewportSchema = z.strictObject({
   zoom: z.number().min(MIN_ZOOM).max(MAX_ZOOM),
 })
 
+export const DEFAULT_CONTROLS = { compass: true, scaleBar: 'bar' } as const
+
+const controlsSchema = z.strictObject({
+  compass: z.boolean().optional(),
+  scaleBar: z.union([z.enum(['bar', 'line']), z.literal(false)]).optional(),
+})
+
 // Omitting viewport fits to the layers; if sent, it must say which mode it is.
 const viewportSchema = z.discriminatedUnion('mode', [fitViewportSchema, explicitViewportSchema])
 
@@ -185,6 +196,7 @@ const mapRenderSchema = z
   .strictObject({
     output: outputSchema.optional(),
     viewport: viewportSchema.optional(),
+    controls: controlsSchema.optional(),
     layers: z
       .array(layerSchema)
       .max(MAX_LAYERS)

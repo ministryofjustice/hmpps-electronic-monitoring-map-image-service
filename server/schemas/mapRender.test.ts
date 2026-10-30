@@ -306,6 +306,24 @@ describe('mapRenderSchema', () => {
     })
   })
 
+  describe('text offset', () => {
+    const textLayers = (offset: unknown) => [
+      { type: 'text', id: 't', points: [{ latitude: 51.5, longitude: -0.1, label: 'A' }], style: { offset } },
+    ]
+
+    it('accepts an offset in pixels', () => {
+      expect(mapRenderSchema.safeParse({ layers: textLayers({ x: 0, y: 20 }) }).success).toBe(true)
+    })
+
+    it.each([
+      ['out of range', { y: 501 }],
+      ['not a number', { y: '20' }],
+      ['unknown key', { z: 1 }],
+    ])('rejects an offset that is %s', (_name, offset) => {
+      expect(mapRenderSchema.safeParse({ layers: textLayers(offset) }).success).toBe(false)
+    })
+  })
+
   describe('lines and tracks', () => {
     const twoPoints = [
       { latitude: 51.5, longitude: -0.1 },
@@ -328,6 +346,21 @@ describe('mapRenderSchema', () => {
       const layers = [{ type: 'lines', id: 'l', points: twoPoints, style: { stroke: { lineDash: [4, 2] } } }]
 
       expect(mapRenderSchema.safeParse({ layers }).success).toBe(false)
+    })
+  })
+
+  describe('controls', () => {
+    const layers = [{ type: 'locations', id: 'a', points: [{ latitude: 51.5, longitude: -0.1 }] }]
+
+    it.each([{}, { compass: false }, { scaleBar: 'line' }, { scaleBar: false }, { compass: true, scaleBar: 'bar' }])(
+      'accepts %j',
+      controls => {
+        expect(mapRenderSchema.safeParse({ layers, controls }).success).toBe(true)
+      },
+    )
+
+    it.each([{ compass: 'yes' }, { scaleBar: true }, { scaleBar: 'huge' }, { zoom: true }])('rejects %j', controls => {
+      expect(mapRenderSchema.safeParse({ layers, controls }).success).toBe(false)
     })
   })
 })
