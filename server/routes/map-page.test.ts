@@ -1,6 +1,6 @@
 import express from 'express'
 import request from 'supertest'
-import setUpMapPage from './setUpMapPage'
+import mapPageRoutes from './map-page'
 
 describe('GET /map', () => {
   const render = jest.fn()
@@ -12,7 +12,7 @@ describe('GET /map', () => {
     }) as typeof res.render
     next()
   })
-  app.use(setUpMapPage())
+  app.use(mapPageRoutes())
 
   beforeEach(() => render.mockClear())
 

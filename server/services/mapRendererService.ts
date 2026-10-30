@@ -2,6 +2,7 @@ import type { Page } from 'playwright'
 import createError from 'http-errors'
 import logger from '../../logger'
 import config from '../config'
+import URLS from '../constants/urls'
 import presentMapRender, { type MapRenderModel } from '../presenters/mapRender'
 import type { MapRenderRequest } from '../schemas/mapRender'
 import { toMapPageQuery } from '../schemas/mapPageControls'
@@ -13,7 +14,6 @@ export type MapImage = {
 }
 
 const DEFAULT_TIMEOUT_MS = 30_000
-const MAP_PATH = '/map'
 
 // Number of renders currently in progress, used to correlate memory spikes with concurrent renders.
 let activeRenderCount = 0
@@ -84,7 +84,9 @@ export default class MapRendererService {
       page.setDefaultTimeout(this.timeoutMs)
       page.setDefaultNavigationTimeout(this.timeoutMs)
 
-      await page.goto(`${this.baseUrl}${MAP_PATH}?${toMapPageQuery(model.controls)}`, { waitUntil: 'domcontentloaded' })
+      await page.goto(`${this.baseUrl}${URLS.MAP.VIEW}?${toMapPageQuery(model.controls)}`, {
+        waitUntil: 'domcontentloaded',
+      })
       await renderMapInPage(page, model, this.timeoutMs)
       logStep('render:pageReady')
 
