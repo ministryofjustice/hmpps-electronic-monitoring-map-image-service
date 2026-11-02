@@ -1,4 +1,4 @@
-import express, { type NextFunction, type Request, type Response, Router } from 'express'
+import express, { type NextFunction, type Request, type RequestHandler, type Response, Router } from 'express'
 import createError from 'http-errors'
 import logger from '../../logger'
 import asyncMiddleware from '../middleware/asyncMiddleware'
@@ -11,6 +11,8 @@ const MAX_BODY_SIZE = '2mb'
 
 const ERROR_CODES: Record<number, string> = {
   400: 'VALIDATION_FAILED',
+  401: 'AUTH_FAILURE',
+  403: 'INSUFFICIENT_ROLES',
   413: 'PAYLOAD_TOO_LARGE',
   415: 'UNSUPPORTED_MEDIA_TYPE',
   504: 'RENDER_TIMEOUT',
@@ -33,10 +35,13 @@ const jsonErrorHandler = (error: createError.HttpError, req: Request, res: Respo
 
   const code = ERROR_CODES[status] ?? 'RENDER_FAILED'
 
-  res.status(status).json({ status, code, message, errors: error.errors })
+  res
+    .set(error.headers ?? {})
+    .status(status)
+    .json({ status, code, message, errors: error.errors })
 }
 
-export default function mapImageRoutes(mapRendererService: MapRendererService): Router {
+export default function mapImageRoutes(mapRendererService: MapRendererService, authenticate: RequestHandler): Router {
   const router = Router()
   const controller = new MapImageController(mapRendererService)
 
@@ -46,6 +51,7 @@ export default function mapImageRoutes(mapRendererService: MapRendererService): 
 
   router.post(
     URLS.MAP_IMAGE.CREATE,
+    authenticate,
     requireJson,
     express.json({ limit: MAX_BODY_SIZE }),
     asyncMiddleware(controller.create),

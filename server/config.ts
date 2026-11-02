@@ -58,6 +58,9 @@ export default {
     secret: get('SESSION_SECRET', 'app-insecure-default-session', requiredInProduction),
     expiryMinutes: Number(get('WEB_SESSION_TIMEOUT_IN_MINUTES', 120)),
   },
+  mapImage: {
+    requiredRole: get('MAP_IMAGE_REQUIRED_ROLE', 'ROLE_EM_MAP_IMAGE__RENDERS__RO'),
+  },
   maps: {
     apiKey: get('OS_MAPS_API_KEY', 'apikey'),
     apiSecret: get('OS_MAPS_API_SECRET', 'apisecret'),

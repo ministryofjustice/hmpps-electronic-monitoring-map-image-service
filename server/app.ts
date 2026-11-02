@@ -1,4 +1,5 @@
 import express from 'express'
+import jwksClient from 'jwks-rsa'
 import { telemetryMiddleware } from '@ministryofjustice/hmpps-azure-telemetry'
 import { emOrdnanceSurveyAuth } from '@ministryofjustice/hmpps-electronic-monitoring-components/map/ordnance-survey-auth'
 
@@ -12,6 +13,7 @@ import authorisationMiddleware from './middleware/authorisationMiddleware'
 import setUpAuthentication from './middleware/setUpAuthentication'
 import setUpCsrf from './middleware/setUpCsrf'
 import setUpCurrentUser from './middleware/setUpCurrentUser'
+import validateHmppsToken from './middleware/validateHmppsToken'
 import setUpHealthChecks from './middleware/setUpHealthChecks'
 import setUpStaticResources from './middleware/setUpStaticResources'
 import setUpWebRequestParsing from './middleware/setUpRequestParsing'
@@ -34,8 +36,22 @@ export default function createApp(services: Services): express.Application {
   // Mounted before auth so Playwright can load it without tokens; access is limited by the ingress allowlist.
   app.use(emOrdnanceSurveyAuth({ apiKey: config.maps.apiKey, apiSecret: config.maps.apiSecret }))
 
+  const authUrl = config.apis.hmppsAuth.url
+  const jwks = jwksClient({
+    jwksUri: `${authUrl}/.well-known/jwks.json`,
+    cache: true,
+    cacheMaxAge: 604800000, // a week
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+  })
+
   app.use(setUpHealthChecks(services.applicationInfo, services.playwrightBrowserService))
-  app.use(mapImageRoutes(services.mapRendererService))
+  app.use(
+    mapImageRoutes(
+      services.mapRendererService,
+      validateHmppsToken(config.mapImage.requiredRole, `${authUrl}/issuer`, jwks),
+    ),
+  )
   app.use(setUpWebSecurity())
   app.use(setUpWebSession())
   app.use(setUpWebRequestParsing())

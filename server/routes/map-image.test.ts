@@ -16,7 +16,13 @@ describe('POST /map-image', () => {
     layers: [{ type: 'locations', id: 'l', points: [{ latitude: 51.5, longitude: -0.1 }] }],
   }
 
-  const app = express().use(mapImageRoutes({ render } as unknown as MapRendererService))
+  const authenticate = jest.fn()
+
+  const app = express().use(mapImageRoutes({ render } as unknown as MapRendererService, authenticate))
+
+  beforeEach(() => {
+    authenticate.mockImplementation((_req, _res, next) => next())
+  })
 
   afterEach(() => {
     jest.resetAllMocks()
@@ -34,6 +40,28 @@ describe('POST /map-image', () => {
     expect(response.headers['content-type']).toBe(contentType)
     expect(response.headers['cache-control']).toBe('no-store')
     expect(response.body).toEqual(image)
+  })
+
+  it('does not read or render the request when authentication fails', async () => {
+    authenticate.mockImplementation((_req, _res, next) => next(createError(401, 'Missing bearer token')))
+
+    const response = await request(app).post('/map-image').send(validRequest)
+
+    expect(response.status).toBe(401)
+    expect(response.body).toMatchObject({ status: 401, code: 'AUTH_FAILURE' })
+    expect(render).not.toHaveBeenCalled()
+  })
+
+  it('returns 403 with the INSUFFICIENT_ROLES code when the caller lacks the role', async () => {
+    authenticate.mockImplementation((_req, _res, next) =>
+      next(createError(403, 'Token does not have the required role')),
+    )
+
+    const response = await request(app).post('/map-image').send(validRequest)
+
+    expect(response.status).toBe(403)
+    expect(response.body.code).toBe('INSUFFICIENT_ROLES')
+    expect(render).not.toHaveBeenCalled()
   })
 
   it('passes the parsed request, with defaults applied, to the renderer', async () => {
