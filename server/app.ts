@@ -12,8 +12,6 @@ import authorisationMiddleware from './middleware/authorisationMiddleware'
 import setUpAuthentication from './middleware/setUpAuthentication'
 import setUpCsrf from './middleware/setUpCsrf'
 import setUpCurrentUser from './middleware/setUpCurrentUser'
-import setUpMapImage from './middleware/setUpMapImage'
-import setUpMapPage from './middleware/setUpMapPage'
 import setUpHealthChecks from './middleware/setUpHealthChecks'
 import setUpStaticResources from './middleware/setUpStaticResources'
 import setUpWebRequestParsing from './middleware/setUpRequestParsing'
@@ -21,6 +19,8 @@ import setUpWebSecurity from './middleware/setUpWebSecurity'
 import setUpWebSession from './middleware/setUpWebSession'
 
 import routes from './routes'
+import mapImageRoutes from './routes/map-image'
+import mapPageRoutes from './routes/map-page'
 import type { Services } from './services'
 
 export default function createApp(services: Services): express.Application {
@@ -35,14 +35,14 @@ export default function createApp(services: Services): express.Application {
   app.use(emOrdnanceSurveyAuth({ apiKey: config.maps.apiKey, apiSecret: config.maps.apiSecret }))
 
   app.use(setUpHealthChecks(services.applicationInfo, services.playwrightBrowserService))
-  app.use(setUpMapImage(services.mapRendererService))
+  app.use(mapImageRoutes(services.mapRendererService))
   app.use(setUpWebSecurity())
   app.use(setUpWebSession())
   app.use(setUpWebRequestParsing())
   app.use(setUpStaticResources())
   nunjucksSetup(app)
   // Unauthenticated so Playwright can load it without tokens; access is limited by the ingress allowlist
-  app.use(setUpMapPage())
+  app.use(mapPageRoutes())
   app.use(setUpAuthentication())
   app.use(authorisationMiddleware())
   app.use(setUpCsrf())

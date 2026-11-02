@@ -1,7 +1,7 @@
 import express from 'express'
 import createError from 'http-errors'
 import request from 'supertest'
-import setUpMapImage from './setUpMapImage'
+import mapImageRoutes from './map-image'
 import type MapRendererService from '../services/mapRendererService'
 
 jest.mock('../../logger', () => ({
@@ -16,7 +16,7 @@ describe('POST /map-image', () => {
     layers: [{ type: 'locations', id: 'l', points: [{ latitude: 51.5, longitude: -0.1 }] }],
   }
 
-  const app = express().use(setUpMapImage({ render } as unknown as MapRendererService))
+  const app = express().use(mapImageRoutes({ render } as unknown as MapRendererService))
 
   afterEach(() => {
     jest.resetAllMocks()

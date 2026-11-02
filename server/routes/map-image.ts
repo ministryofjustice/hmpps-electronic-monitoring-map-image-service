@@ -1,10 +1,10 @@
 import express, { type NextFunction, type Request, type Response, Router } from 'express'
 import createError from 'http-errors'
 import logger from '../../logger'
-import mapRenderSchema from '../schemas/mapRender'
+import asyncMiddleware from '../middleware/asyncMiddleware'
+import URLS from '../constants/urls'
+import MapImageController from '../controllers/map/image'
 import type MapRendererService from '../services/mapRendererService'
-
-export const MAP_IMAGE_PATH = '/map-image'
 
 // The schema allows up to 10,000 points, which is well under this once serialised
 const MAX_BODY_SIZE = '2mb'
@@ -36,31 +36,22 @@ const jsonErrorHandler = (error: createError.HttpError, req: Request, res: Respo
   res.status(status).json({ status, code, message, errors: error.errors })
 }
 
-export default function setUpMapImage(mapRendererService: MapRendererService): Router {
+export default function mapImageRoutes(mapRendererService: MapRendererService): Router {
   const router = Router()
+  const controller = new MapImageController(mapRendererService)
 
   // Make sure request is using application/json
   const requireJson = (req: Request, _res: Response, next: NextFunction) =>
     next(req.is('application/json') ? undefined : createError(415, 'Content-Type must be application/json'))
 
-  router.post(MAP_IMAGE_PATH, requireJson, express.json({ limit: MAX_BODY_SIZE }), async (req, res, next) => {
-    const result = mapRenderSchema.safeParse(req.body)
+  router.post(
+    URLS.MAP_IMAGE.CREATE,
+    requireJson,
+    express.json({ limit: MAX_BODY_SIZE }),
+    asyncMiddleware(controller.create),
+  )
 
-    if (!result.success) {
-      const errors = result.error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message }))
-      next(createError(400, 'Invalid map render request', { errors }))
-      return
-    }
-
-    try {
-      const { image, contentType } = await mapRendererService.render(result.data)
-      res.set('Cache-Control', 'no-store').type(contentType).send(image)
-    } catch (error) {
-      next(error)
-    }
-  })
-
-  router.use(MAP_IMAGE_PATH, jsonErrorHandler)
+  router.use(URLS.MAP_IMAGE.CREATE, jsonErrorHandler)
 
   return router
 }

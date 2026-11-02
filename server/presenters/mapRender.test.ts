@@ -250,6 +250,16 @@ describe('presentMapRender', () => {
     expect(model.fonts).toEqual(['bold 18px "GDS Transport", system-ui, sans-serif'])
   })
 
+  it('offsets text from its point only when asked', () => {
+    const textOptions = (style?: object) =>
+      presentMapRender(
+        parse({ layers: [{ type: 'text', id: 't', points: [{ ...point, label: '1' }], ...(style && { style }) }] }),
+      ).layers[0].options.style
+
+    expect(textOptions()).toMatchObject({ offset: { x: 0, y: 0 } })
+    expect(textOptions({ offset: { y: 20 } })).toMatchObject({ offset: { x: 0, y: 20 } })
+  })
+
   it('has no attribution when it is omitted', () => {
     const model = presentMapRender(parse({ layers: [{ type: 'locations', id: 'l', points: [point] }] }))
 
