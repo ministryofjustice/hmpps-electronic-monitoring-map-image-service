@@ -11,6 +11,40 @@ Our security policy is located [here](https://github.com/ministryofjustice/hmpps
 
 The service renders map images using the `@ministryofjustice/hmpps-electronic-monitoring-components` map in headless Chromium (Playwright).
 
+### Endpoint
+
+`POST /map-image` with a JSON body (see the [request contract](#request-contract)) returns the rendered image.
+
+```bash
+curl -sS -X POST "$BASE_URL/map-image" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"viewport":{"mode":"explicit","centre":{"latitude":53.43159,"longitude":-2.5282},"zoom":17},"layers":[]}' \
+  -o map.png
+```
+
+#### Authentication
+
+Send an HMPPS Auth `client_credentials` access token as a bearer token. The token's client must have the role `ROLE_EM_MAP_IMAGE__RENDERS__RO`.
+
+`GET /map`, the page Playwright loads to draw the map, and the health endpoints do not require a token.
+
+#### Responses
+
+A successful response is the image, with `Content-Type` of `image/jpeg` or `image/png` and `Cache-Control: no-store`. Errors are JSON in the shape `{ "status", "code", "message", "errors"? }`.
+
+| Status | `code`                   | When                                                                                                   |
+| ------ | ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| 400    | `VALIDATION_FAILED`      | The body does not match the contract. `errors` lists each `path` and `message`.                        |
+| 401    | `AUTH_FAILURE`           | The bearer token is missing, invalid or expired.                                                       |
+| 403    | `INSUFFICIENT_ROLES`     | The token is valid but does not carry the required role.                                               |
+| 413    | `PAYLOAD_TOO_LARGE`      | The body is larger than 2 MB.                                                                          |
+| 415    | `UNSUPPORTED_MEDIA_TYPE` | `Content-Type` is not `application/json`.                                                              |
+| 500    | `RENDER_FAILED`          | The map could not be rendered.                                                                         |
+| 504    | `RENDER_TIMEOUT`         | Rendering did not finish within 30 seconds. The first render after a start can be slow, so retry once. |
+
+If the base map cannot be loaded, the image is still returned, with a blank base map.
+
 ### Request contract
 
 Everything is optional except that a request with no layers must have an explicit viewport.
