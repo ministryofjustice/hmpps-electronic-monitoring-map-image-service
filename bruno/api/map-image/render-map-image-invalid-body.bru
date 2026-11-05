@@ -1,0 +1,31 @@
+meta {
+  name: Render map image (invalid body)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/map-image
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "viewport": { "mode": "explicit" }
+  }
+}
+
+tests {
+  test("it should respond with a bad request status", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("it should respond with a validation error", function () {
+    expect(res.getBody().code).to.equal("VALIDATION_FAILED");
+  });
+}

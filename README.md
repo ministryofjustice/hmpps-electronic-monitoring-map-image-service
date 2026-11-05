@@ -105,6 +105,16 @@ Layers are drawn in array order: the first layer is at the bottom and the last o
 
 The map has no default attribution. If the image is published or shown to users, the caller is responsible for supplying any attribution wording the map data licence requires in `output.attribution`.
 
+### Trying the endpoint with Bruno
+
+The [`bruno/`](bruno) folder is a [Bruno](https://www.usebruno.com/) collection for calling the endpoint.
+
+1. Open the `bruno/` folder in Bruno and select the `dev` or `local` environment.
+2. Set the secret variables `clientId` and `clientSecret` for a client that has the required role.
+3. Run `auth/get-token`, then any request in `api/map-image`.
+
+Locally, run the service with `HMPPS_AUTH_URL` set to the same HMPPS Auth that issued the token.
+
 ### Testing map rendering
 
 `integration_tests/specs/mapRender.spec.ts` renders real JPEG and PNG images through Chromium. Run it with the app and wiremock started as described in [Running integration tests](#running-integration-tests):
@@ -195,6 +205,8 @@ and the github pipeline build config.
 And then, to build the assets and start the app with esbuild:
 
 `npm run start:dev`
+
+`start:dev` runs Node with `--use-system-ca`, so calls to OS Maps work on networks that inspect HTTPS traffic with their own certificate. Without it, map renders fail with `SELF_SIGNED_CERT_IN_CHAIN` and time out with a 504. If you see that error when starting the app another way, run Node with `--use-system-ca` or set `NODE_USE_SYSTEM_CA=1`.
 
 ### Logging in with a test user
 

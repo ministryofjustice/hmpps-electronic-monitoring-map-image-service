@@ -10,7 +10,7 @@ generic-service:
   image:
     repository: ghcr.io/ministryofjustice/hmpps-electronic-monitoring-map-image-service
     tag: app_version # override at deployment time
-    port: 3000
+    port: 3001
 
   ingress:
     enabled: true

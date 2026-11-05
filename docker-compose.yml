@@ -23,9 +23,9 @@ services:
     networks:
       - hmpps
     ports:
-      - "3000:3000"
+      - "3001:3001"
     healthcheck:
-      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/3000"]
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/3001"]
     environment:
       - PRODUCT_ID=UNASSIGNED
       - REDIS_ENABLED=false
@@ -40,7 +40,7 @@ services:
       - SESSION_SECRET=somesecretvalue
       - TOKEN_VERIFICATION_API_URL=http://hmpps-auth:8080/auth
       - TOKEN_VERIFICATION_ENABLED=false
-      - INGRESS_URL=http://localhost:3000
+      - INGRESS_URL=http://localhost:3001
       - OS_MAPS_API_KEY=UNASSIGNED
       - OS_MAPS_API_SECRET=UNASSIGNED
       - NO_HTTPS=true

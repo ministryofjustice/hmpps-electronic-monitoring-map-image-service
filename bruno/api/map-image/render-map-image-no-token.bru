@@ -1,0 +1,28 @@
+meta {
+  name: Render map image (no token)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/map-image
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "viewport": {
+      "mode": "explicit",
+      "centre": { "latitude": 53.43159, "longitude": -2.5282 },
+      "zoom": 17
+    },
+    "layers": []
+  }
+}
+
+tests {
+  test("it should respond with an unauthorized status", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
