@@ -1,0 +1,28 @@
+meta {
+  name: Get token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{authUrl}}/oauth/token
+  body: formUrlEncoded
+  auth: basic
+}
+
+auth:basic {
+  username: {{clientId}}
+  password: {{clientSecret}}
+}
+
+body:form-urlencoded {
+  grant_type: client_credentials
+}
+
+assert {
+  res.status: eq 200
+}
+
+script:post-response {
+  bru.setEnvVar("accessToken", res.body.access_token);
+}

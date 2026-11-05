@@ -1,0 +1,36 @@
+meta {
+  name: Render map image
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/map-image
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "viewport": {
+      "mode": "explicit",
+      "centre": { "latitude": 53.43159, "longitude": -2.5282 },
+      "zoom": 17
+    },
+    "layers": []
+  }
+}
+
+tests {
+  test("it should respond with an OK status", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("it should respond with an image", function () {
+    expect(res.getHeader("content-type")).to.match(/^image\/(png|jpeg)/);
+  });
+}
