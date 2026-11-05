@@ -206,6 +206,8 @@ And then, to build the assets and start the app with esbuild:
 
 `npm run start:dev`
 
+`start:dev` runs Node with `--use-system-ca`, so calls to OS Maps work on networks that inspect HTTPS traffic with their own certificate. Without it, map renders fail with `SELF_SIGNED_CERT_IN_CHAIN` and time out with a 504. If you see that error when starting the app another way, run Node with `--use-system-ca` or set `NODE_USE_SYSTEM_CA=1`.
+
 ### Logging in with a test user
 
 Once the application is running you should then be able to login with:

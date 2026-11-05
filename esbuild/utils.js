@@ -187,6 +187,8 @@ class ServerManager {
     const nodeArgs = [
       ...(this.options.envFile ? [`--env-file=${this.options.envFile}`] : []),
       '--enable-source-maps',
+      // Trust the OS certificate store so calls to OS Maps work on networks that inspect HTTPS traffic
+      '--use-system-ca',
       'dist/server.js',
     ]
 
