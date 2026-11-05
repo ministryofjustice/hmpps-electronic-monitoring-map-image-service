@@ -35,7 +35,7 @@ const playwrightConfig = () => {
   return {
     chromiumExecutablePath: chromiumExecutablePath === '' ? undefined : chromiumExecutablePath,
     // The service renders its own /map page
-    renderBaseUrl: get('MAP_RENDER_BASE_URL', `http://localhost:${process.env.PORT || 3000}`),
+    renderBaseUrl: get('MAP_RENDER_BASE_URL', `http://localhost:${process.env.PORT || 3001}`),
   }
 }
 
@@ -94,7 +94,7 @@ export default {
   sqs: {
     audit: auditConfig(),
   },
-  ingressUrl: get('INGRESS_URL', 'http://localhost:3000', requiredInProduction),
+  ingressUrl: get('INGRESS_URL', 'http://localhost:3001', requiredInProduction),
   environmentName: get('ENVIRONMENT_NAME', ''),
   playwright: playwrightConfig(),
 }
