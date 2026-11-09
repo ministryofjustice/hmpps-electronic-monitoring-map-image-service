@@ -42,8 +42,7 @@ const renderMapInPage = async (page: Page, model: MapRenderModel): Promise<void>
 }
 
 // Closes the browser context at the end of a render. If closing fails (for example because Chromium has crashed),
-// we only log it. Throwing here would hide the image or error the caller should receive,
-// and would stop the render counter being decremented.
+// we only log it. Throwing here would hide the image or error the caller should receive.
 const closeBrowserContextSafely = async (browserContext: BrowserContext | undefined): Promise<void> => {
   try {
     await browserContext?.close()
@@ -62,23 +61,6 @@ export default class MapRendererService {
   // Renders a map image, failing with a 504 if it takes longer than timeoutMs overall.
   async render(request: MapRenderRequest): Promise<MapImage> {
     const model = presentMapRender(request)
-    const { width, height, pixelRatio } = model.output
-    let browserContext: BrowserContext | undefined
-
-    // Creates the browser context and captures the image. This is the work that gets the time limit.
-    const createImageTask = async (signal: AbortSignal): Promise<MapImage> => {
-      const browser = await this.browserService.getBrowser()
-      browserContext = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: pixelRatio })
-
-      // If creating the context was so slow that the timeout has already fired, the cleanup below has already run
-      // without seeing this context, so we close it here rather than carry on rendering for a caller who has gone.
-      if (signal.aborted) {
-        await closeBrowserContextSafely(browserContext)
-        throw new Error('Render abandoned before the browser context was ready')
-      }
-
-      return this.captureImage(browserContext, model)
-    }
 
     activeRenderCount += 1
     logStep('render:start', `, layers=${model.layers.length}, format=${model.output.format}`)
@@ -87,12 +69,32 @@ export default class MapRendererService {
       return await raceAgainstTimeout(
         this.timeoutMs,
         () => createError(504, `Map render did not complete within ${this.timeoutMs}ms`),
-        createImageTask,
+        signal => this.createImage(model, signal),
       )
     } finally {
-      await closeBrowserContextSafely(browserContext)
       activeRenderCount -= 1
       logStep('render:end')
+    }
+  }
+
+  // Creates the browser context and captures the image. This is the work that gets the time limit.
+  private async createImage(model: MapRenderModel, signal: AbortSignal): Promise<MapImage> {
+    const { width, height, pixelRatio } = model.output
+
+    const browser = await this.browserService.getBrowser()
+    const browserContext = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: pixelRatio })
+
+    try {
+      // If creating the context was so slow that the timeout has already fired, the abort listener below would never
+      // run, so we stop here (the finally closes the context) rather than carry on rendering for a caller who has gone.
+      if (signal.aborted) {
+        throw new Error('Render abandoned before the browser context was ready')
+      }
+      signal.addEventListener('abort', () => closeBrowserContextSafely(browserContext), { once: true })
+
+      return await this.captureImage(browserContext, model)
+    } finally {
+      await closeBrowserContextSafely(browserContext)
     }
   }
 
