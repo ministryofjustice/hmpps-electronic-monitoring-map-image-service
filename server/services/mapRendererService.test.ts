@@ -2,6 +2,11 @@ import MapRendererService from './mapRendererService'
 import type PlaywrightBrowserService from './playwrightBrowserService'
 import mapRenderSchema from '../schemas/mapRender'
 
+const flushPromises = () =>
+  new Promise<void>(resolve => {
+    setImmediate(resolve)
+  })
+
 jest.mock('../../logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -36,7 +41,7 @@ describe('MapRendererService', () => {
     const result = await service.render(request)
 
     expect(browser.newContext).toHaveBeenCalledWith({ viewport: { width: 1200, height: 650 }, deviceScaleFactor: 1.2 })
-    expect(page.setDefaultTimeout).toHaveBeenCalledWith(30_000)
+    expect(page.setDefaultTimeout).toHaveBeenCalledWith(15_000)
     expect(page.goto).toHaveBeenCalledWith('http://map.test/map?compass=true&scaleBar=bar', {
       waitUntil: 'domcontentloaded',
     })
@@ -78,6 +83,49 @@ describe('MapRendererService', () => {
       message: 'Map render did not complete within 20ms',
     })
     expect(mapElement.screenshot).not.toHaveBeenCalled()
+    expect(context.close).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns the render result when closing the context fails', async () => {
+    const { context, service } = createMocks()
+    context.close.mockRejectedValue(new Error('Target closed'))
+
+    await expect(service.render(request)).resolves.toMatchObject({ contentType: 'image/jpeg' })
+  })
+
+  it('rejects with the original error when the context cannot be created', async () => {
+    const { browser, service } = createMocks()
+    browser.newContext.mockRejectedValue(new Error('Browser has been closed'))
+
+    await expect(service.render(request)).rejects.toThrow('Browser has been closed')
+  })
+
+  it('includes launching the context in the deadline and closes a context that arrives late', async () => {
+    const { browser, context, page } = createMocks()
+    let resolveContext: (value: unknown) => void = () => {}
+    browser.newContext.mockReturnValue(
+      new Promise(resolve => {
+        resolveContext = resolve
+      }),
+    )
+    const browserService = { getBrowser: jest.fn().mockResolvedValue(browser) } as unknown as PlaywrightBrowserService
+    const service = new MapRendererService(browserService, 'http://map.test', 20)
+
+    await expect(service.render(request)).rejects.toMatchObject({ status: 504 })
+
+    resolveContext(context)
+    await flushPromises()
+    expect(context.close).toHaveBeenCalledTimes(1)
+    expect(page.goto).not.toHaveBeenCalled()
+  })
+
+  it('times out when the page never finishes loading', async () => {
+    const { browser, page, context } = createMocks()
+    page.goto.mockReturnValue(new Promise(() => {}))
+    const browserService = { getBrowser: jest.fn().mockResolvedValue(browser) } as unknown as PlaywrightBrowserService
+    const service = new MapRendererService(browserService, 'http://map.test', 20)
+
+    await expect(service.render(request)).rejects.toMatchObject({ status: 504 })
     expect(context.close).toHaveBeenCalledTimes(1)
   })
 })

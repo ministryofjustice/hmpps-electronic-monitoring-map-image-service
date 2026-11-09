@@ -2,6 +2,7 @@ import shutdownTelemetry from './server/utils/azureAppInsights'
 
 import { app, services } from './server/index'
 import logger from './logger'
+import config from './server/config'
 
 async function start(): Promise<void> {
   // Fail fast if Chromium can't start, so the pod restarts rather than serving renders that can't succeed
@@ -17,6 +18,11 @@ async function start(): Promise<void> {
   // Handle graceful shutdown
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}, shutting down`)
+
+    setTimeout(() => {
+      logger.error('Graceful shutdown timed out, forcing exit')
+      process.exit(1)
+    }, config.shutdownTimeoutMs).unref()
 
     server.close(async () => {
       try {

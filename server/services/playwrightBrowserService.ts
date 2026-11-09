@@ -2,10 +2,16 @@ import { chromium, type Browser } from 'playwright'
 import logger from '../../logger'
 import config from '../config'
 
+const RELAUNCH_RETRY_DELAY_MS = 5_000
+
 export default class PlaywrightBrowserService {
   private browser?: Browser
 
   private launching?: Promise<Browser>
+
+  private closing = false
+
+  private relaunchTimer?: NodeJS.Timeout
 
   async getBrowser(): Promise<Browser> {
     if (this.browser?.isConnected()) return this.browser
@@ -24,6 +30,7 @@ export default class PlaywrightBrowserService {
 
           if (this.browser === chromiumBrowser) {
             this.browser = undefined
+            this.relaunch()
           }
         })
 
@@ -37,11 +44,23 @@ export default class PlaywrightBrowserService {
     return this.launching
   }
 
+  // Relaunch straight away so readiness recovers without waiting for the next render request.
+  private relaunch(): void {
+    if (this.closing) return
+
+    this.getBrowser().catch(error => {
+      logger.error(error, '[playwright] failed to relaunch browser, retrying')
+      this.relaunchTimer = setTimeout(() => this.relaunch(), RELAUNCH_RETRY_DELAY_MS)
+    })
+  }
+
   isReady(): boolean {
     return Boolean(this.browser?.isConnected())
   }
 
   async close(): Promise<void> {
+    this.closing = true
+    clearTimeout(this.relaunchTimer)
     if (!this.browser) return
 
     logger.info('[playwright] closing shared browser')

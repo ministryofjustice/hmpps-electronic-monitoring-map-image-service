@@ -2,6 +2,11 @@ import { chromium, type Browser } from 'playwright'
 import PlaywrightBrowserService from './playwrightBrowserService'
 
 // Silence logger during tests
+const flushPromises = () =>
+  new Promise<void>(resolve => {
+    setImmediate(resolve)
+  })
+
 jest.mock('../../logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -113,5 +118,61 @@ describe('PlaywrightBrowserService', () => {
 
     await expect(service.getBrowser()).rejects.toThrow('Chromium failed to launch')
     expect(service.isReady()).toBe(false)
+  })
+
+  describe('when the browser disconnects', () => {
+    const disconnect = (browser: Browser) => {
+      const handler = (browser.on as jest.Mock).mock.calls.find(([event]) => event === 'disconnected')[1]
+      handler()
+    }
+
+    it('relaunches the browser without waiting for a request', async () => {
+      const first = createBrowser()
+      const second = createBrowser()
+      launchMock.mockResolvedValueOnce(first).mockResolvedValueOnce(second)
+      const service = new PlaywrightBrowserService()
+      await service.getBrowser()
+
+      disconnect(first)
+      await flushPromises()
+
+      expect(launchMock).toHaveBeenCalledTimes(2)
+      expect(service.isReady()).toBe(true)
+    })
+
+    it('retries the relaunch after a failure', async () => {
+      jest.useFakeTimers()
+      try {
+        const first = createBrowser()
+        const second = createBrowser()
+        launchMock
+          .mockResolvedValueOnce(first)
+          .mockRejectedValueOnce(new Error('launch failed'))
+          .mockResolvedValueOnce(second)
+        const service = new PlaywrightBrowserService()
+        await service.getBrowser()
+
+        disconnect(first)
+        await jest.advanceTimersByTimeAsync(5_000)
+
+        expect(launchMock).toHaveBeenCalledTimes(3)
+        expect(service.isReady()).toBe(true)
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('does not relaunch after close', async () => {
+      const browser = createBrowser()
+      launchMock.mockResolvedValue(browser)
+      const service = new PlaywrightBrowserService()
+      await service.getBrowser()
+      await service.close()
+
+      disconnect(browser)
+      await flushPromises()
+
+      expect(launchMock).toHaveBeenCalledTimes(1)
+    })
   })
 })
