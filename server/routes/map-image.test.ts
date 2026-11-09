@@ -133,7 +133,7 @@ describe('POST /map-image', () => {
   })
 
   it('returns 504 when the render times out', async () => {
-    render.mockRejectedValue(createError(504, 'Map render did not complete within 30000ms'))
+    render.mockRejectedValue(createError(504, 'Map render did not complete within 15000ms'))
 
     const response = await request(app).post('/map-image').send(validRequest)
 

@@ -35,6 +35,8 @@ const playwrightConfig = () => {
   return {
     chromiumExecutablePath: chromiumExecutablePath === '' ? undefined : chromiumExecutablePath,
     // The service renders its own /map page
+    // Overall deadline for a single render, from launching a browser context to capturing the screenshot
+    renderTimeoutMs: Number(get('MAP_RENDER_TIMEOUT_MS', 15000)),
     renderBaseUrl: get('MAP_RENDER_BASE_URL', `http://localhost:${process.env.PORT || 3001}`),
   }
 }
@@ -96,5 +98,7 @@ export default {
   },
   ingressUrl: get('INGRESS_URL', 'http://localhost:3001', requiredInProduction),
   environmentName: get('ENVIRONMENT_NAME', ''),
+  // Must be shorter than the pod's termination grace period (30s by default), so we exit cleanly rather than being killed
+  shutdownTimeoutMs: Number(get('SHUTDOWN_TIMEOUT_MS', 20000)),
   playwright: playwrightConfig(),
 }

@@ -41,7 +41,7 @@ A successful response is the image, with `Content-Type` of `image/jpeg` or `imag
 | 413    | `PAYLOAD_TOO_LARGE`      | The body is larger than 2 MB.                                                                          |
 | 415    | `UNSUPPORTED_MEDIA_TYPE` | `Content-Type` is not `application/json`.                                                              |
 | 500    | `RENDER_FAILED`          | The map could not be rendered.                                                                         |
-| 504    | `RENDER_TIMEOUT`         | Rendering did not finish within 30 seconds. The first render after a start can be slow, so retry once. |
+| 504    | `RENDER_TIMEOUT`         | Rendering did not finish within 15 seconds (configurable with `MAP_RENDER_TIMEOUT_MS`). The first render after a start can be slow, so retry once. |
 
 If the base map cannot be loaded, the image is still returned, with a blank base map.
 
