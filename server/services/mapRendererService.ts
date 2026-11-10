@@ -79,10 +79,7 @@ export default class MapRendererService {
 
   // Creates the browser context and captures the image. This is the work that gets the time limit.
   private async createImage(model: MapRenderModel, signal: AbortSignal): Promise<MapImage> {
-    const { width, height, pixelRatio } = model.output
-
-    const browser = await this.browserService.getBrowser()
-    const browserContext = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: pixelRatio })
+    const browserContext = await this.createBrowserContext(model)
 
     try {
       // If creating the context was so slow that the timeout has already fired, the abort listener below would never
@@ -96,6 +93,13 @@ export default class MapRendererService {
     } finally {
       await closeBrowserContextSafely(browserContext)
     }
+  }
+
+  // Creates a browser context sized for the requested output.
+  private async createBrowserContext(model: MapRenderModel): Promise<BrowserContext> {
+    const { width, height, pixelRatio } = model.output
+    const browser = await this.browserService.getBrowser()
+    return browser.newContext({ viewport: { width, height }, deviceScaleFactor: pixelRatio })
   }
 
   // Loads the map page in the browser context, draws the map and screenshots it.
