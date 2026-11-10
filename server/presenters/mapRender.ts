@@ -7,6 +7,7 @@ import type {
   TracksLayerOptions,
 } from '@ministryofjustice/hmpps-electronic-monitoring-components/map/layers'
 import type { MapRenderLayer, MapRenderRequest } from '../schemas/mapRender'
+import mapMarkers from './mapMarkers'
 import {
   DEFAULT_CONTROLS,
   DEFAULT_EXTENSION_METRES,
@@ -141,6 +142,19 @@ const presentLayer = (layer: MapRenderLayer, index: number): PresentedLayer => {
     }
 
     case 'locations': {
+      if (layer.marker?.type === 'icon') {
+        return {
+          type: 'locations',
+          options: {
+            ...common,
+            accessibleMarkers: false,
+            renderer: 'auto',
+            positions: presentPositions(layer.points),
+            marker: { type: 'image', image: { svg: mapMarkers[layer.marker.name], scale: 1, anchor: [0.5, 0.5] } },
+          },
+        }
+      }
+
       const marker = { ...layer.style, ...layer.marker }
       return {
         type: 'locations',

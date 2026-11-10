@@ -1,0 +1,91 @@
+meta {
+  name: Render map image (fitted viewport)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/map-image
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "output": { "width": 1000, "height": 700, "format": "png", "attribution": "Contains OS data © Crown copyright" },
+    "viewport": { "mode": "fit", "fitToLayerIds": ["crime-radius", "device-track"], "padding": 40 },
+    "controls": { "compass": true, "scaleBar": "bar" },
+    "layers": [
+      {
+        "type": "circles",
+        "id": "crime-radius",
+        "points": [{ "latitude": 51.51, "longitude": -0.1, "precision": 300 }],
+        "style": { "fill": "#00000020", "stroke": { "color": "#00000073", "width": 2 } }
+      },
+      {
+        "type": "tracks",
+        "id": "device-track",
+        "points": [
+          { "latitude": 51.5, "longitude": -0.12 },
+          { "latitude": 51.505, "longitude": -0.11 },
+          { "latitude": 51.51, "longitude": -0.1 },
+          { "latitude": 51.515, "longitude": -0.095 },
+          { "latitude": 51.52, "longitude": -0.09 }
+        ],
+        "style": { "stroke": { "color": "#1d70b8" } },
+        "entryExit": {
+          "extensionMetres": 100,
+          "extendBeyond": { "centre": { "latitude": 51.51, "longitude": -0.1 }, "radiusMetres": 300 }
+        }
+      },
+      {
+        "type": "locations",
+        "id": "device-positions",
+        "points": [
+          { "latitude": 51.505, "longitude": -0.11 },
+          { "latitude": 51.51, "longitude": -0.1 },
+          { "latitude": 51.515, "longitude": -0.095 }
+        ],
+        "marker": { "type": "circle", "radius": 5, "fill": "#1d70b8", "stroke": { "color": "#1d70b8", "width": 0.5 } }
+      },
+      {
+        "type": "locations",
+        "id": "home",
+        "points": [{ "latitude": 51.5, "longitude": -0.12 }],
+        "marker": { "type": "icon", "name": "home" }
+      },
+      {
+        "type": "locations",
+        "id": "most-recent",
+        "points": [{ "latitude": 51.52, "longitude": -0.09 }],
+        "marker": { "type": "icon", "name": "mostRecent" }
+      },
+      {
+        "type": "text",
+        "id": "crime-type",
+        "points": [{ "latitude": 51.51, "longitude": -0.1, "label": "Theft from a motor vehicle" }],
+        "style": { "color": "#d4351c", "offset": { "x": 0, "y": 20 } }
+      },
+      {
+        "type": "locations",
+        "id": "crime",
+        "points": [{ "latitude": 51.51, "longitude": -0.1 }],
+        "marker": { "type": "icon", "name": "crime" }
+      }
+    ]
+  }
+}
+
+tests {
+  test("it should respond with an OK status", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("it should respond with a png image", function () {
+    expect(res.getHeader("content-type")).to.equal("image/png");
+  });
+}

@@ -116,12 +116,20 @@ const locationMarkerSchema = z.strictObject({
     .optional(),
 })
 
+export const MARKER_ICONS = ['crime', 'home', 'mostRecent'] as const
+
+// Named pin icons
+const iconMarkerSchema = z.strictObject({
+  type: z.literal('icon'),
+  name: z.enum(MARKER_ICONS),
+})
+
 const locationsLayerSchema = z.strictObject({
   type: z.literal('locations'),
   id: layerIdSchema,
   points: pointsOf(pointSchema),
-  // style is an alternative for marker, consistent with the other layer types; marker wins if both are sent
-  marker: locationMarkerSchema.optional(),
+  // style is an alternative for a circle marker, consistent with the other layer types; marker wins if both are sent
+  marker: z.union([iconMarkerSchema, locationMarkerSchema]).optional(),
   style: locationMarkerSchema.optional(),
 })
 

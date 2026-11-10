@@ -108,6 +108,16 @@ describe('presentMapRender', () => {
     expect(model.output).not.toHaveProperty('quality')
   })
 
+  it('maps a named icon marker to the component image marker with the UI svg', () => {
+    const model = presentMapRender(
+      parse({ layers: [{ type: 'locations', id: 'l', points: [point], marker: { type: 'icon', name: 'crime' } }] }),
+    )
+
+    expect(model.layers[0].options).toMatchObject({
+      marker: { type: 'image', image: { svg: expect.stringContaining('#CA3535'), scale: 1, anchor: [0.5, 0.5] } },
+    })
+  })
+
   it('orders layers by array index, makes them visible and keeps solid and dashed tracks distinct', () => {
     const model = presentMapRender(
       parse({
