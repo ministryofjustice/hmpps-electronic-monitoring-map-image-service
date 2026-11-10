@@ -87,6 +87,22 @@ test.describe('Map render', () => {
     expect(two.image.equals(one.image)).toBe(false)
   })
 
+  test('draws named icon markers differently from circle markers', async () => {
+    const base = { output: { format: 'png' }, viewport: { mode: 'explicit', centre: points[1], zoom: 13 } }
+    const circle = await render({ ...base, layers: [{ type: 'locations', id: 'p', points: [points[1]] }] })
+    const icons = await Promise.all(
+      ['crime', 'home', 'mostRecent'].map(name =>
+        render({
+          ...base,
+          layers: [{ type: 'locations', id: 'p', points: [points[1]], marker: { type: 'icon', name } }],
+        }),
+      ),
+    )
+
+    icons.forEach(({ image }) => expect(image.equals(circle.image)).toBe(false))
+    expect(icons[0].image.equals(icons[1].image)).toBe(false)
+  })
+
   test('draws solid and dashed tracks differently', async () => {
     const base = { output: { format: 'png' } }
     const solid = await render({ ...base, layers: [{ type: 'tracks', id: 't', points }] })

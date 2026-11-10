@@ -53,6 +53,17 @@ describe('mapRenderSchema', () => {
     ).toBe(false)
   })
 
+  it('accepts named icon markers and rejects unknown icons or extra fields', () => {
+    const points = [{ latitude: 51.5, longitude: -0.1 }]
+    const parseMarker = (marker: unknown) =>
+      mapRenderSchema.safeParse({ layers: [{ type: 'locations', id: 'l', points, marker }] }).success
+
+    expect(parseMarker({ type: 'icon', name: 'crime' })).toBe(true)
+    expect(parseMarker({ type: 'icon', name: 'mostRecent' })).toBe(true)
+    expect(parseMarker({ type: 'icon', name: 'noneExistantMarker' })).toBe(false)
+    expect(parseMarker({ type: 'icon', name: 'crime', radius: 5 })).toBe(false)
+  })
+
   it('accepts track entry and exit options with bearings', () => {
     const request = {
       layers: [
