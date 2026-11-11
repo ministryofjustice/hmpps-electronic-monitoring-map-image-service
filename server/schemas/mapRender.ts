@@ -9,6 +9,8 @@ export const MAX_PIXEL_RATIO = 2
 export const MAX_ATTRIBUTION_LENGTH = 200
 // Caps Chromium's memory use, counting pixelRatio (e.g. 1200x650 at 2x is about 3.1M).
 export const MAX_RENDERED_PIXELS = 4_000_000
+// The longest a caller can ask the service to hold a request while waiting for a free render slot
+export const MAX_QUEUE_WAIT_MS = 30_000
 
 export const DEFAULT_WIDTH_PX = 800
 export const DEFAULT_HEIGHT_PX = 600
@@ -205,6 +207,8 @@ const mapRenderSchema = z
     output: outputSchema.optional(),
     viewport: viewportSchema.optional(),
     controls: controlsSchema.optional(),
+    // How long to wait for a free render slot when the service is busy; 0 fails straight away
+    maxQueueWaitMs: z.int().min(0).max(MAX_QUEUE_WAIT_MS).optional(),
     layers: z
       .array(layerSchema)
       .max(MAX_LAYERS)
