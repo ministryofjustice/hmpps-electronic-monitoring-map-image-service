@@ -1,4 +1,6 @@
+import createError from 'http-errors'
 import MapRendererService from './mapRendererService'
+import ConcurrencyLimiter from '../utils/concurrencyLimiter'
 import type PlaywrightBrowserService from './playwrightBrowserService'
 import mapRenderSchema from '../schemas/mapRender'
 
@@ -33,6 +35,18 @@ describe('MapRendererService', () => {
     const browserService = { getBrowser: jest.fn().mockResolvedValue(browser) } as unknown as PlaywrightBrowserService
 
     return { mapElement, page, context, browser, service: new MapRendererService(browserService, 'http://map.test') }
+  }
+
+  // A service limited to one render with one queue place, whose first render stays loading until finishFirst() is called
+  const createBusyService = () => {
+    const { browser, page, context } = createMocks()
+    const { promise: firstRenderLoading, resolve: finishFirst } = Promise.withResolvers<void>()
+    page.goto.mockReturnValueOnce(firstRenderLoading)
+    const browserService = { getBrowser: jest.fn().mockResolvedValue(browser) } as unknown as PlaywrightBrowserService
+    const limiter = new ConcurrencyLimiter(1, 1, () => createError(503, 'busy'))
+    const service = new MapRendererService(browserService, 'http://map.test', 15_000, limiter, 1000)
+
+    return { context, page, service, finishFirst }
   }
 
   it('renders the model in the map page and returns the screenshot', async () => {
@@ -127,5 +141,31 @@ describe('MapRendererService', () => {
 
     await expect(service.render(request)).rejects.toMatchObject({ status: 504 })
     expect(context.close).toHaveBeenCalledTimes(1)
+  })
+
+  describe('when renders are at the concurrency limit', () => {
+    it('fails with a 503 straight away when the request sets maxQueueWaitMs to 0', async () => {
+      const { service, finishFirst } = createBusyService()
+      const first = service.render(request)
+      await flushPromises()
+
+      await expect(service.render({ ...request, maxQueueWaitMs: 0 })).rejects.toMatchObject({ status: 503 })
+
+      finishFirst()
+      await first
+    })
+
+    it('waits for a free slot by default, then renders', async () => {
+      const { service, context, finishFirst } = createBusyService()
+      const first = service.render(request)
+      await flushPromises()
+      const second = service.render(request)
+      await flushPromises()
+
+      finishFirst()
+
+      await expect(Promise.all([first, second])).resolves.toHaveLength(2)
+      expect(context.close).toHaveBeenCalledTimes(2)
+    })
   })
 })

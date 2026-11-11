@@ -37,6 +37,13 @@ const playwrightConfig = () => {
     // The service renders its own /map page
     // Overall deadline for a single render, from launching a browser context to capturing the screenshot
     renderTimeoutMs: Number(get('MAP_RENDER_TIMEOUT_MS', 15000)),
+    // Renders running at once in this process, and how many more may wait for a slot.
+    maxConcurrentRenders: Number(get('MAP_RENDER_MAX_CONCURRENCY', 2)),
+    maxQueuedRenders: Number(get('MAP_RENDER_MAX_QUEUE_SIZE', 5)),
+    // How long a request waits for a slot when it doesn't set maxQueueWaitMs
+    queueWaitMs: Number(get('MAP_RENDER_QUEUE_WAIT_MS', 10000)),
+    // Fixed hint for now; could later be estimated from recent render durations and queue length, with jitter
+    busyRetryAfterSeconds: Number(get('MAP_RENDER_BUSY_RETRY_AFTER_SECONDS', 5)),
     renderBaseUrl: get('MAP_RENDER_BASE_URL', `http://localhost:${process.env.PORT || 3001}`),
   }
 }
