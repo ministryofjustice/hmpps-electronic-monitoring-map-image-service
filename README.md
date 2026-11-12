@@ -41,6 +41,7 @@ A successful response is the image, with `Content-Type` of `image/jpeg` or `imag
 | 413    | `PAYLOAD_TOO_LARGE`      | The body is larger than 2 MB.                                                                          |
 | 415    | `UNSUPPORTED_MEDIA_TYPE` | `Content-Type` is not `application/json`.                                                              |
 | 500    | `RENDER_FAILED`          | The map could not be rendered.                                                                         |
+| 503    | `RENDER_BUSY`            | Too many renders are in progress. The request waited up to `maxQueueWaitMs` for a free slot, or the queue was full. Retry after the number of seconds in the `Retry-After` header. Each instance renders `MAP_RENDER_MAX_CONCURRENCY` (default 2) images at once and queues up to `MAP_RENDER_MAX_QUEUE_SIZE` (default 5) more. `MAP_RENDER_QUEUE_WAIT_MS` (default 10000) is the wait when the request sets no `maxQueueWaitMs`. `MAP_RENDER_BUSY_RETRY_AFTER_SECONDS` (default 5) sets the `Retry-After` value. The 15 second render limit below starts only once a slot is free. |
 | 504    | `RENDER_TIMEOUT`         | Rendering did not finish within 15 seconds (configurable with `MAP_RENDER_TIMEOUT_MS`). The first render after a start can be slow, so retry once. |
 
 If the base map cannot be loaded, the image is still returned, with a blank base map.
@@ -84,6 +85,7 @@ Everything is optional except that a request with no layers must have an explici
 | `viewport`            | fit to layers         | If sent it must include `mode`. `fit` takes `padding` (0-500, default 20), `maxZoom` (5-20, default 18) and optional `fitToLayerIds` (ids of supplied layers to fit to; all are still drawn, and circle radii are included). `explicit` takes `centre` and `zoom` (5-20). |
 | `controls`            | compass and scale bar | `compass` (boolean, default `true`) and `scaleBar` (`"bar"` default, `"line"`, or `false` to hide).                                                                                                                                                                       |
 | `layers`              | `[]`                  | At most 20 layers with unique ids, 5,000 points per layer and 10,000 points in total.                                                                                                                                                                                     |
+| `maxQueueWaitMs`      | 10000                 | 0-30000. How long to wait for a free render slot when the service is busy. 0 fails straight away with a 503.                                                                                                                                                              |
 
 Colours are hex (`#1d7`, `#11dd77` or `#11dd77ff`).
 
