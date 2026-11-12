@@ -7,6 +7,7 @@ import presentMapRender, { type MapRenderModel } from '../presenters/mapRender'
 import type { MapRenderRequest } from '../schemas/mapRender'
 import { toMapPageQuery } from '../schemas/mapPageControls'
 import raceAgainstTimeout from '../utils/raceAgainstTimeout'
+import ConcurrencyLimiter from '../utils/concurrencyLimiter'
 import type PlaywrightBrowserService from './playwrightBrowserService'
 
 export type MapImage = {
@@ -56,12 +57,29 @@ export default class MapRendererService {
     private readonly browserService: PlaywrightBrowserService,
     private readonly baseUrl: string = config.playwright.renderBaseUrl,
     private readonly timeoutMs: number = config.playwright.renderTimeoutMs,
+    private readonly limiter: ConcurrencyLimiter = new ConcurrencyLimiter(
+      config.playwright.maxConcurrentRenders,
+      config.playwright.maxQueuedRenders,
+      () =>
+        createError(503, 'Map rendering is busy', {
+          headers: { 'Retry-After': String(config.playwright.busyRetryAfterSeconds) },
+        }),
+    ),
+    private readonly defaultQueueWaitMs: number = config.playwright.queueWaitMs,
   ) {}
 
-  // Renders a map image, failing with a 504 if it takes longer than timeoutMs overall.
+  // Renders a map image. If renders are already at the concurrency limit, waits for a slot for up to
+  // maxQueueWaitMs, then fails with a 503. The time limit below only starts once a slot is held.
   async render(request: MapRenderRequest): Promise<MapImage> {
     const model = presentMapRender(request)
 
+    return this.limiter.runWhenSlotFree(request.maxQueueWaitMs ?? this.defaultQueueWaitMs, () =>
+      this.renderWithTimeout(model),
+    )
+  }
+
+  // Renders the model, failing with a 504 if it takes longer than timeoutMs overall.
+  private async renderWithTimeout(model: MapRenderModel): Promise<MapImage> {
     activeRenderCount += 1
     logStep('render:start', `, layers=${model.layers.length}, format=${model.output.format}`)
 

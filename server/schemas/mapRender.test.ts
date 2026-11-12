@@ -64,6 +64,17 @@ describe('mapRenderSchema', () => {
     expect(parseMarker({ type: 'icon', name: 'crime', radius: 5 })).toBe(false)
   })
 
+  it('accepts a queue wait of 0 to the maximum and rejects values outside it', () => {
+    const parseWait = (maxQueueWaitMs: unknown) =>
+      mapRenderSchema.safeParse({ ...validRequest(), maxQueueWaitMs }).success
+
+    expect(parseWait(0)).toBe(true)
+    expect(parseWait(30_000)).toBe(true)
+    expect(parseWait(-1)).toBe(false)
+    expect(parseWait(30_001)).toBe(false)
+    expect(parseWait(1.5)).toBe(false)
+  })
+
   it('accepts track entry and exit options with bearings', () => {
     const request = {
       layers: [
