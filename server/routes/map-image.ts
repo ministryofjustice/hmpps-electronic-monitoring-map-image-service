@@ -15,6 +15,7 @@ const ERROR_CODES: Record<number, string> = {
   403: 'INSUFFICIENT_ROLES',
   413: 'PAYLOAD_TOO_LARGE',
   415: 'UNSUPPORTED_MEDIA_TYPE',
+  503: 'RENDER_BUSY',
   504: 'RENDER_TIMEOUT',
 }
 
@@ -23,7 +24,8 @@ const ERROR_CODES: Record<number, string> = {
 const jsonErrorHandler = (error: createError.HttpError, req: Request, res: Response, _next: NextFunction): void => {
   const status = error.status || error.statusCode || 500
 
-  if (status >= 500) {
+  // A busy service is expected under load, so it isn't logged as an error
+  if (status >= 500 && status !== 503) {
     logger.error(`Error rendering map image for '${req.originalUrl}'`, error)
   } else {
     logger.info(`Rejected map image request: ${error.message}`)
@@ -31,6 +33,7 @@ const jsonErrorHandler = (error: createError.HttpError, req: Request, res: Respo
 
   let { message } = error
   if (status === 504) message = 'Map render timed out'
+  else if (status === 503) message = 'Map rendering is busy, try again later'
   else if (status >= 500) message = 'Failed to render map image'
 
   const code = ERROR_CODES[status] ?? 'RENDER_FAILED'

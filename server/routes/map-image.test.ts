@@ -141,6 +141,20 @@ describe('POST /map-image', () => {
     expect(response.body).toEqual({ status: 504, code: 'RENDER_TIMEOUT', message: 'Map render timed out' })
   })
 
+  it('returns 503 with Retry-After when rendering is busy', async () => {
+    render.mockRejectedValue(createError(503, 'Map rendering is busy', { headers: { 'Retry-After': '5' } }))
+
+    const response = await request(app).post('/map-image').send(validRequest)
+
+    expect(response.status).toBe(503)
+    expect(response.headers['retry-after']).toBe('5')
+    expect(response.body).toEqual({
+      status: 503,
+      code: 'RENDER_BUSY',
+      message: 'Map rendering is busy, try again later',
+    })
+  })
+
   it('returns 500 with a generic message when rendering fails', async () => {
     render.mockRejectedValue(new Error('Chromium crashed at /secret/path'))
 
