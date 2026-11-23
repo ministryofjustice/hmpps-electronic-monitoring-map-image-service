@@ -3,7 +3,6 @@ import shutdownTelemetry from './server/utils/azureAppInsights'
 import { app, services } from './server/index'
 import logger from './logger'
 import config from './server/config'
-import createMetricsApp from './server/monitoring/metricsApp'
 
 async function start(): Promise<void> {
   // Fail fast if Chromium can't start, so the pod restarts rather than serving renders that can't succeed
@@ -16,13 +15,6 @@ async function start(): Promise<void> {
     logger.info(`Server listening on port ${port}`)
   })
 
-  // Separate app to setup a metrics endpoint for Prometheus to scrape
-  const metricsApp = createMetricsApp()
-  const metricsPort = metricsApp.get('port')
-  const metricsServer = metricsApp.listen(metricsPort, () => {
-    logger.info(`Metrics server listening on port ${metricsPort}`)
-  })
-
   // Handle graceful shutdown
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}, shutting down`)
@@ -33,7 +25,6 @@ async function start(): Promise<void> {
     }, config.shutdownTimeoutMs).unref()
 
     server.close(async () => {
-      metricsServer.close()
       try {
         await services.playwrightBrowserService.close()
         logger.info('[playwright] browser closed')

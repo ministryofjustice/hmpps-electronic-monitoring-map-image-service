@@ -1,8 +1,9 @@
+import express from 'express'
 import request from 'supertest'
-import createMetricsApp from './metricsApp'
+import metricsRoutes from './metrics'
 
-describe('metrics app', () => {
-  const app = createMetricsApp()
+describe('GET /metrics', () => {
+  const app = express().use(metricsRoutes())
 
   it('serves default process metrics in Prometheus format', async () => {
     const response = await request(app).get('/metrics')

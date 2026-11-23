@@ -23,6 +23,7 @@ import setUpWebSession from './middleware/setUpWebSession'
 import routes from './routes'
 import mapImageRoutes from './routes/map-image'
 import mapPageRoutes from './routes/map-page'
+import metricsRoutes from './routes/metrics'
 import type { Services } from './services'
 
 export default function createApp(services: Services): express.Application {
@@ -46,6 +47,7 @@ export default function createApp(services: Services): express.Application {
   })
 
   app.use(setUpHealthChecks(services.applicationInfo, services.playwrightBrowserService))
+  app.use(metricsRoutes())
   app.use(
     mapImageRoutes(
       services.mapRendererService,

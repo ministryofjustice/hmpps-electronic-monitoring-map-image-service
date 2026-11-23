@@ -5,13 +5,9 @@ meta {
 }
 
 get {
-  url: {{metricsUrl}}/metrics
+  url: {{baseUrl}}/metrics
   body: none
   auth: none
-}
-
-docs {
-  Local only: /metrics is served on the app port + 1 and isn't routed through the ingress, so there is no dev equivalent.
 }
 
 tests {
