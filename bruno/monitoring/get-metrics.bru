@@ -1,0 +1,22 @@
+meta {
+  name: Get metrics
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{metricsUrl}}/metrics
+  body: none
+  auth: none
+}
+
+docs {
+  Local only: /metrics is served on the app port + 1 and isn't routed through the ingress, so there is no dev equivalent.
+}
+
+tests {
+  test("it should respond with Prometheus metrics", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.include("process_cpu_user_seconds_total");
+  });
+}
