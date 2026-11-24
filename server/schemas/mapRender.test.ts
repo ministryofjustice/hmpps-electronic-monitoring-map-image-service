@@ -212,7 +212,6 @@ describe('mapRenderSchema', () => {
 
   it.each([
     ['missing', undefined],
-    ['zero', 0],
     ['negative', -5],
   ])('rejects circles with %s precision', (_name, precision) => {
     const request = {
@@ -221,6 +220,15 @@ describe('mapRenderSchema', () => {
     }
 
     expect(mapRenderSchema.safeParse(request).success).toBe(false)
+  })
+
+  it('accepts circles with zero precision', () => {
+    const request = {
+      ...validRequest(),
+      layers: [{ type: 'circles', id: 'c', points: [{ latitude: 51.5, longitude: -0.1, precision: 0 }] }],
+    }
+
+    expect(mapRenderSchema.safeParse(request).success).toBe(true)
   })
 
   it('requires a label for text points', () => {
