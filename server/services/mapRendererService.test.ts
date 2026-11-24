@@ -3,6 +3,7 @@ import MapRendererService from './mapRendererService'
 import ConcurrencyLimiter from '../utils/concurrencyLimiter'
 import type PlaywrightBrowserService from './playwrightBrowserService'
 import mapRenderSchema from '../schemas/mapRender'
+import { renderDuration } from '../monitoring/metrics'
 
 const flushPromises = () =>
   new Promise<void>(resolve => {
@@ -141,6 +142,64 @@ describe('MapRendererService', () => {
 
     await expect(service.render(request)).rejects.toMatchObject({ status: 504 })
     expect(context.close).toHaveBeenCalledTimes(1)
+  })
+
+  describe('render duration metric', () => {
+    // How many renders have been recorded with this outcome.
+    const recordedRendersWithOutcome = async (outcome: string) => {
+      const { values } = await renderDuration.get()
+      const countForOutcome = values.find(
+        value => value.metricName === 'map_render_duration_seconds_count' && value.labels.outcome === outcome,
+      )
+
+      return countForOutcome?.value
+    }
+
+    beforeEach(() => renderDuration.reset())
+
+    it('records a successful render', async () => {
+      const { service } = createMocks()
+
+      await service.render(request)
+
+      expect(await recordedRendersWithOutcome('success')).toBe(1)
+    })
+
+    it('records a render that fails in the page', async () => {
+      const { page, service } = createMocks()
+      page.evaluate.mockRejectedValue(new Error('Render failed'))
+
+      await expect(service.render(request)).rejects.toThrow('Render failed')
+
+      expect(await recordedRendersWithOutcome('failed')).toBe(1)
+    })
+
+    it('records a render that times out', async () => {
+      const { page, browser } = createMocks()
+      page.evaluate.mockReturnValue(new Promise(() => {}))
+      const browserService = { getBrowser: jest.fn().mockResolvedValue(browser) } as unknown as PlaywrightBrowserService
+
+      await expect(new MapRendererService(browserService, 'http://map.test', 20).render(request)).rejects.toMatchObject(
+        {
+          status: 504,
+        },
+      )
+
+      expect(await recordedRendersWithOutcome('timeout')).toBe(1)
+    })
+
+    it('records a render rejected as busy', async () => {
+      const { service, finishFirst } = createBusyService()
+      const first = service.render(request)
+      await flushPromises()
+
+      await expect(service.render({ ...request, maxQueueWaitMs: 0 })).rejects.toMatchObject({ status: 503 })
+
+      expect(await recordedRendersWithOutcome('busy')).toBe(1)
+
+      finishFirst()
+      await first
+    })
   })
 
   describe('when renders are at the concurrency limit', () => {
