@@ -125,6 +125,14 @@ Locally, run the service with `HMPPS_AUTH_URL` set to the same HMPPS Auth that i
 
 The map tiles are stubbed, so the base map is a plain background and the layers are what you see. Each layer type's image is attached to the Playwright report (`npx playwright show-report`).
 
+## Monitoring
+
+Prometheus metrics are served at `/metrics` on the app port, as the HMPPS Kotlin APIs do. It's mounted before authentication because Prometheus scrapes it without a token, and the Helm `custommetrics` block tells Prometheus to scrape it every 15 seconds.
+
+Currently these are the default Node process metrics (CPU, memory, event loop lag). Run the app and check them with `curl localhost:3001/metrics`, or run `monitoring/get-metrics` in the [Bruno collection](#trying-the-endpoint-with-bruno) with the `local` environment.
+
+The setup is based on [hmpps-manage-people-on-probation-ui](https://github.com/ministryofjustice/hmpps-manage-people-on-probation-ui), which inherited it from the old `hmpps-template-typescript`, with the endpoint on the app port like the Kotlin APIs. `express-prom-bundle` is deliberately left out, as the template removed it after a memory leak from labelling metrics by request path. Any labels we add must have a small, fixed set of values.
+
 ## Oauth2 Credentials
 
 The service is set up to run with two sets of credentials, each one support a different oauth2 flows.

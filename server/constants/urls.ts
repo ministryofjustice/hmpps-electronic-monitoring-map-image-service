@@ -5,6 +5,9 @@ const URLS = {
   MAP_IMAGE: {
     CREATE: '/map-image' as const,
   },
+  METRICS: {
+    READ: '/metrics' as const,
+  },
 }
 
 export default URLS

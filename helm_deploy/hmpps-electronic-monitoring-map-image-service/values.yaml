@@ -44,6 +44,14 @@ generic-service:
     AUDIT_ENABLED: 'false'
     AUDIT_SERVICE_NAME: 'hmpps-electronic-monitoring-map-image-service' # Your audit service name
 
+  # Makes the chart create a ServiceMonitor, which tells Prometheus to scrape /metrics from the app port
+  # every 15 seconds.
+  custommetrics:
+    enabled: true
+    scrapeInterval: 15s
+    metricsPath: /metrics
+    metricsPort: http
+
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
   # namespace_secrets:
   #   [name of kubernetes secret]:
