@@ -101,6 +101,8 @@ Only the layers supplied are drawn, and the map fits to those layers' points by 
 | `locations` | `{ latitude, longitude }`                               | `marker`: `{ type: "circle", radius, fill, stroke: { color, width } }`, or a named pin icon `{ type: "icon", name }` where `name` is `crime`, `home` or `mostRecent`. `style` is accepted as an alias for a circle `marker`; `marker` wins if both are sent.                                                                                                  |
 | `text`      | `{ latitude, longitude, label }`                        | `style.color`, `.size`, `.haloColor`, `.haloWidth` (0 for no halo) and `.offset` (`{ x, y }` in pixels, positive `y` is down, so a label does not cover its marker).                                                                                                              |
 
+A circle's `precision` can be `0`, which draws nothing visible at that position.
+
 Layers are drawn in array order: the first layer is at the bottom and the last on top. There is no separate z-index in the contract, so reorder the layers to change the stacking (for example, put `text` last so labels are not hidden by `locations`).
 
 ### Attribution

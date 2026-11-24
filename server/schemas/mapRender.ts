@@ -36,7 +36,7 @@ const pointSchema = z.strictObject({
 })
 
 const circlePointSchema = pointSchema.extend({
-  precision: z.number().positive().max(100_000),
+  precision: z.number().nonnegative().max(100_000),
 })
 
 // Direction of travel in degrees, used to extend a track at its ends
