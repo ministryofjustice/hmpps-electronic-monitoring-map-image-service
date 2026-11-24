@@ -1,4 +1,4 @@
-import promClient from 'prom-client'
+import promClient from '@prometheus-io/client'
 
 // A dedicated registry avoids duplicate-metric errors if this module is loaded twice
 const register = new promClient.Registry()
