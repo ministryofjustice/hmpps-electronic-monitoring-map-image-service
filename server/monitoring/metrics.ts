@@ -1,9 +1,9 @@
 import promClient from '@prometheus-io/client'
 
 // A dedicated registry avoids duplicate-metric errors if this module is loaded twice
-const register = new promClient.Registry()
+const metricsRegistry = new promClient.Registry()
 
-promClient.collectDefaultMetrics({ register })
+promClient.collectDefaultMetrics({ register: metricsRegistry })
 
 // Measures total render duration, including time spent waiting for a free slot.
 export const renderDuration = new promClient.Histogram({
@@ -11,7 +11,22 @@ export const renderDuration = new promClient.Histogram({
   help: 'Time to render a map image, including time waiting for a free slot',
   labelNames: ['outcome'] as const,
   buckets: [0.5, 1, 1.5, 2, 3, 5, 10, 15, 20, 30, 45],
-  registers: [register],
+  registers: [metricsRegistry],
 })
 
-export default register
+type MonitoredRenderer = { concurrency: { inProgress: number } }
+
+// Reports how many renders are in progress, read from the limiter each time Prometheus scrapes.
+export const registerRenderGauges = (mapRendererService: MonitoredRenderer): void => {
+  // eslint-disable-next-line no-new
+  new promClient.Gauge({
+    name: 'map_renders_in_progress',
+    help: 'Number of renders in progress',
+    registers: [metricsRegistry],
+    collect() {
+      this.set(mapRendererService.concurrency.inProgress)
+    },
+  })
+}
+
+export default metricsRegistry

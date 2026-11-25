@@ -14,7 +14,7 @@ export default class ConcurrencyLimiter {
   ) {}
 
   // How many tasks hold a slot and how many are waiting for one, for monitoring.
-  get running(): number {
+  get inProgress(): number {
     return this.slotsInUse
   }
 

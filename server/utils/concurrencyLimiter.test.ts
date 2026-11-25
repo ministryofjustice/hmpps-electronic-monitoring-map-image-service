@@ -10,21 +10,21 @@ const createSlowTask = () => {
 }
 
 describe('ConcurrencyLimiter', () => {
-  it('reports how many tasks are running and queued', async () => {
+  it('reports how many tasks are in progress and queued', async () => {
     const limiter = new ConcurrencyLimiter(1, 1, busy)
     const slow = createSlowTask()
 
-    expect([limiter.running, limiter.queued]).toEqual([0, 0])
+    expect([limiter.inProgress, limiter.queued]).toEqual([0, 0])
 
     const runningRequest = limiter.runWhenSlotFree(1000, slow.run)
     const queuedRequest = limiter.runWhenSlotFree(1000, async () => {})
 
-    expect([limiter.running, limiter.queued]).toEqual([1, 1])
+    expect([limiter.inProgress, limiter.queued]).toEqual([1, 1])
 
     slow.finish()
     await Promise.all([runningRequest, queuedRequest])
 
-    expect([limiter.running, limiter.queued]).toEqual([0, 0])
+    expect([limiter.inProgress, limiter.queued]).toEqual([0, 0])
   })
 
   it('starts a queued request once a slot is freed', async () => {

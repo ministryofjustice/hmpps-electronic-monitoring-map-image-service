@@ -77,6 +77,11 @@ export default class MapRendererService {
     private readonly defaultQueueWaitMs: number = config.playwright.queueWaitMs,
   ) {}
 
+  // How many renders are in progress, for monitoring.
+  get concurrency(): { inProgress: number } {
+    return { inProgress: this.limiter.inProgress }
+  }
+
   // Renders a map image. If renders are already at the concurrency limit, waits for a slot for up to
   // maxQueueWaitMs, then fails with a 503. The time limit below only starts once a slot is held.
   async render(request: MapRenderRequest): Promise<MapImage> {
