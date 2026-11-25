@@ -14,9 +14,9 @@ export const renderDuration = new promClient.Histogram({
   registers: [metricsRegistry],
 })
 
-type MonitoredRenderer = { concurrency: { inProgress: number } }
+type MonitoredRenderer = { concurrency: { inProgress: number; queued: number } }
 
-// Reports how many renders are in progress, read from the limiter each time Prometheus scrapes.
+// Reports how busy rendering is, read from the limiter each time Prometheus scrapes.
 export const registerRenderGauges = (mapRendererService: MonitoredRenderer): void => {
   // eslint-disable-next-line no-new
   new promClient.Gauge({
@@ -25,6 +25,16 @@ export const registerRenderGauges = (mapRendererService: MonitoredRenderer): voi
     registers: [metricsRegistry],
     collect() {
       this.set(mapRendererService.concurrency.inProgress)
+    },
+  })
+
+  // eslint-disable-next-line no-new
+  new promClient.Gauge({
+    name: 'map_renders_queued',
+    help: 'Number of renders waiting for a free slot',
+    registers: [metricsRegistry],
+    collect() {
+      this.set(mapRendererService.concurrency.queued)
     },
   })
 }
