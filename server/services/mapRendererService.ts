@@ -16,14 +16,6 @@ export type MapImage = {
   contentType: 'image/jpeg' | 'image/png'
 }
 
-// Number of renders currently in progress, used to correlate memory spikes with concurrent renders.
-let activeRenderCount = 0
-
-// Log a pipeline step, tagged with the number of renders in progress.
-const logStep = (step: string, extraInfo = ''): void => {
-  logger.info(`[mapRendererService] ${step} (activeRenders=${activeRenderCount}${extraInfo})`)
-}
-
 // Labels a failed render as busy (503), timeout (504) or failed for anything else.
 const failureOutcome = (error: unknown): 'busy' | 'timeout' | 'failed' => {
   const status = createError.isHttpError(error) ? error.status : undefined
@@ -100,10 +92,14 @@ export default class MapRendererService {
     }
   }
 
+  // Logs a pipeline step, tagged with the number of renders in progress, to correlate memory spikes with concurrent renders.
+  private logStep(step: string, extraInfo = ''): void {
+    logger.info(`[mapRendererService] ${step} (activeRenders=${this.limiter.inProgress}${extraInfo})`)
+  }
+
   // Renders the model, failing with a 504 if it takes longer than timeoutMs overall.
   private async renderWithTimeout(model: MapRenderModel): Promise<MapImage> {
-    activeRenderCount += 1
-    logStep('render:start', `, layers=${model.layers.length}, format=${model.output.format}`)
+    this.logStep('render:start', `, layers=${model.layers.length}, format=${model.output.format}`)
 
     try {
       return await raceAgainstTimeout(
@@ -112,8 +108,7 @@ export default class MapRendererService {
         signal => this.createImage(model, signal),
       )
     } finally {
-      activeRenderCount -= 1
-      logStep('render:end')
+      this.logStep('render:end')
     }
   }
 
@@ -154,10 +149,10 @@ export default class MapRendererService {
       waitUntil: 'domcontentloaded',
     })
     await renderMapInPage(page, model)
-    logStep('render:pageReady')
+    this.logStep('render:pageReady')
 
     const image = await screenshotMapElement(page, format, quality)
-    logStep('render:captured', `, bytes=${image.length}`)
+    this.logStep('render:captured', `, bytes=${image.length}`)
 
     return { image, contentType: format === 'jpeg' ? 'image/jpeg' : 'image/png' }
   }
