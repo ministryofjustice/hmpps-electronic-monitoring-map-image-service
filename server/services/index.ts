@@ -2,6 +2,7 @@ import { AuditServiceFactory } from '@ministryofjustice/hmpps-audit-client'
 import { dataAccess } from '../data'
 import logger from '../../logger'
 import config from '../config'
+import { registerRenderGauges } from '../monitoring/metrics'
 import MapRendererService from './mapRendererService'
 import PlaywrightBrowserService from './playwrightBrowserService'
 
@@ -12,6 +13,7 @@ export const services = () => {
 
   const playwrightBrowserService = new PlaywrightBrowserService()
   const mapRendererService = new MapRendererService(playwrightBrowserService)
+  registerRenderGauges(mapRendererService)
 
   return {
     applicationInfo,

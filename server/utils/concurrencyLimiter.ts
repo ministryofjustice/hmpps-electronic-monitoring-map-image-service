@@ -13,6 +13,15 @@ export default class ConcurrencyLimiter {
     private readonly createBusyError: () => Error,
   ) {}
 
+  // How many tasks hold a slot and how many are waiting for one, for monitoring.
+  get inProgress(): number {
+    return this.slotsInUse
+  }
+
+  get queued(): number {
+    return this.queue.length
+  }
+
   // Waits for a slot, runs the task, then frees the slot whether the task succeeds or fails.
   async runWhenSlotFree<T>(maxWaitMs: number, task: () => Promise<T>): Promise<T> {
     await this.waitForSlot(maxWaitMs)

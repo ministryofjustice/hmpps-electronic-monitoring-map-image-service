@@ -8,6 +8,7 @@ import type { MapRenderRequest } from '../schemas/mapRender'
 import { toMapPageQuery } from '../schemas/mapPageControls'
 import raceAgainstTimeout from '../utils/raceAgainstTimeout'
 import ConcurrencyLimiter from '../utils/concurrencyLimiter'
+import { renderDuration } from '../monitoring/metrics'
 import type PlaywrightBrowserService from './playwrightBrowserService'
 
 export type MapImage = {
@@ -15,12 +16,12 @@ export type MapImage = {
   contentType: 'image/jpeg' | 'image/png'
 }
 
-// Number of renders currently in progress, used to correlate memory spikes with concurrent renders.
-let activeRenderCount = 0
-
-// Log a pipeline step, tagged with the number of renders in progress.
-const logStep = (step: string, extraInfo = ''): void => {
-  logger.info(`[mapRendererService] ${step} (activeRenders=${activeRenderCount}${extraInfo})`)
+// Labels a failed render as busy (503), timeout (504) or failed for anything else.
+const failureOutcome = (error: unknown): 'busy' | 'timeout' | 'failed' => {
+  const status = createError.isHttpError(error) ? error.status : undefined
+  if (status === 503) return 'busy'
+  if (status === 504) return 'timeout'
+  return 'failed'
 }
 
 // Capture a screenshot of the map element, returning it as a buffer.
@@ -68,20 +69,37 @@ export default class MapRendererService {
     private readonly defaultQueueWaitMs: number = config.playwright.queueWaitMs,
   ) {}
 
+  // How many renders are in progress and how many are waiting for a slot, for monitoring.
+  get concurrency(): { inProgress: number; queued: number } {
+    return { inProgress: this.limiter.inProgress, queued: this.limiter.queued }
+  }
+
   // Renders a map image. If renders are already at the concurrency limit, waits for a slot for up to
   // maxQueueWaitMs, then fails with a 503. The time limit below only starts once a slot is held.
   async render(request: MapRenderRequest): Promise<MapImage> {
     const model = presentMapRender(request)
+    const stopTimer = renderDuration.startTimer()
 
-    return this.limiter.runWhenSlotFree(request.maxQueueWaitMs ?? this.defaultQueueWaitMs, () =>
-      this.renderWithTimeout(model),
-    )
+    try {
+      const mapImage = await this.limiter.runWhenSlotFree(request.maxQueueWaitMs ?? this.defaultQueueWaitMs, () =>
+        this.renderWithTimeout(model),
+      )
+      stopTimer({ outcome: 'success' })
+      return mapImage
+    } catch (error) {
+      stopTimer({ outcome: failureOutcome(error) })
+      throw error
+    }
+  }
+
+  // Logs a pipeline step, tagged with the number of renders in progress, to correlate memory spikes with concurrent renders.
+  private logStep(step: string, extraInfo = ''): void {
+    logger.info(`[mapRendererService] ${step} (activeRenders=${this.limiter.inProgress}${extraInfo})`)
   }
 
   // Renders the model, failing with a 504 if it takes longer than timeoutMs overall.
   private async renderWithTimeout(model: MapRenderModel): Promise<MapImage> {
-    activeRenderCount += 1
-    logStep('render:start', `, layers=${model.layers.length}, format=${model.output.format}`)
+    this.logStep('render:start', `, layers=${model.layers.length}, format=${model.output.format}`)
 
     try {
       return await raceAgainstTimeout(
@@ -90,8 +108,7 @@ export default class MapRendererService {
         signal => this.createImage(model, signal),
       )
     } finally {
-      activeRenderCount -= 1
-      logStep('render:end')
+      this.logStep('render:end')
     }
   }
 
@@ -132,10 +149,10 @@ export default class MapRendererService {
       waitUntil: 'domcontentloaded',
     })
     await renderMapInPage(page, model)
-    logStep('render:pageReady')
+    this.logStep('render:pageReady')
 
     const image = await screenshotMapElement(page, format, quality)
-    logStep('render:captured', `, bytes=${image.length}`)
+    this.logStep('render:captured', `, bytes=${image.length}`)
 
     return { image, contentType: format === 'jpeg' ? 'image/jpeg' : 'image/png' }
   }

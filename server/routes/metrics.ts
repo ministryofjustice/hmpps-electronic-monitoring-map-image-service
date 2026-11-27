@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import asyncMiddleware from '../middleware/asyncMiddleware'
 import URLS from '../constants/urls'
-import register from '../monitoring/metrics'
+import metricsRegistry from '../monitoring/metrics'
 
 export default function metricsRoutes(): Router {
   const router = Router()
@@ -9,8 +9,8 @@ export default function metricsRoutes(): Router {
   router.get(
     URLS.METRICS.READ,
     asyncMiddleware(async (_req, res) => {
-      res.set('Content-Type', register.contentType)
-      res.end(await register.metrics())
+      res.set('Content-Type', metricsRegistry.contentType)
+      res.end(await metricsRegistry.metrics())
     }),
   )
 

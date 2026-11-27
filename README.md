@@ -131,7 +131,13 @@ The map tiles are stubbed, so the base map is a plain background and the layers 
 
 Prometheus metrics are served at `/metrics` on the app port, as the HMPPS Kotlin APIs do. It's mounted before authentication because Prometheus scrapes it without a token, and the Helm `custommetrics` block tells Prometheus to scrape it every 15 seconds.
 
-Currently these are the default Node process metrics (CPU, memory, event loop lag). Run the app and check them with `curl localhost:3001/metrics`, or run `monitoring/get-metrics` in the [Bruno collection](#trying-the-endpoint-with-bruno) with the `local` environment.
+The [default Node process metrics](https://github.com/prometheus/client_js#default-metrics) (CPU, memory, event loop lag, garbage collection) are exposed, plus these render metrics:
+
+- `map_render_duration_seconds` (histogram): how long a render took, including time waiting for a free slot. Its `outcome` label is `success`, `busy` (503), `timeout` (504) or `failed`, and its `_count` gives the number of requests.
+- `map_renders_in_progress` (gauge): renders running now, out of `MAP_RENDER_MAX_CONCURRENCY`.
+- `map_renders_queued` (gauge): renders waiting for a slot, out of `MAP_RENDER_MAX_QUEUE_SIZE`.
+
+Run the app and check them with `curl localhost:3001/metrics`, or run `monitoring/get-metrics` in the [Bruno collection](#trying-the-endpoint-with-bruno) with the `local` environment.
 
 The setup is based on [hmpps-manage-people-on-probation-ui](https://github.com/ministryofjustice/hmpps-manage-people-on-probation-ui), which inherited it from the old `hmpps-template-typescript`, with the endpoint on the app port like the Kotlin APIs. `express-prom-bundle` is deliberately left out, as the template removed it after a memory leak from labelling metrics by request path. Any labels we add must have a small, fixed set of values.
 
