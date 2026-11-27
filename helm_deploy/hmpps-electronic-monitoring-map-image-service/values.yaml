@@ -83,3 +83,6 @@ generic-service:
 
 generic-prometheus-alerts:
   targetApplication: hmpps-electronic-monitoring-map-image-service
+
+# The Grafana dashboard is shared across environments, so only one needs to deploy it
+deploy_grafana_dashboards: false

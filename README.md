@@ -135,6 +135,17 @@ Currently these are the default Node process metrics (CPU, memory, event loop la
 
 The setup is based on [hmpps-manage-people-on-probation-ui](https://github.com/ministryofjustice/hmpps-manage-people-on-probation-ui), which inherited it from the old `hmpps-template-typescript`, with the endpoint on the app port like the Kotlin APIs. `express-prom-bundle` is deliberately left out, as the template removed it after a memory leak from labelling metrics by request path. Any labels we add must have a small, fixed set of values.
 
+### Grafana Dashboards
+
+These links open on the dev environment. Change the namespace (or environment) filter to view preprod or prod.
+
+- [Map Image Service](https://grafana.live.cloud-platform.service.justice.gov.uk/d/map-image-service/map-image-service?orgId=1&from=now-6h&to=now&var-environment=dev)
+  - Shows memory against the limit, container restarts, Node heap and event loop lag
+- [Resource Usage](https://grafana.live.cloud-platform.service.justice.gov.uk/d/a164a7f0339f99e89cea5cb47e9be617/kubernetes-compute-resources-workload?orgId=1&from=now-1h&to=now&var-namespace=hmpps-electronic-monitoring-map-image-service-dev&var-workload_type=deployment&var-workload=hmpps-electronic-monitoring-map-image-service)
+- [Kubernetes Pod View](https://grafana.live.cloud-platform.service.justice.gov.uk/d/k8s_views_pods/kubernetes-views-pods?orgId=1&from=now-1h&to=now&var-namespace=hmpps-electronic-monitoring-map-image-service-dev)
+- [Nginx Ingress Controller](https://grafana.live.cloud-platform.service.justice.gov.uk/d/nginx-ingress-controller/nginx-ingress-controller?orgId=1&from=now-6h&to=now&var-namespace=hmpps-electronic-monitoring-map-image-service-dev&var-service=hmpps-electronic-monitoring-map-image-service)
+- [Application Alerts](https://grafana.live.cloud-platform.service.justice.gov.uk/d/application-alerts/application-alerts?orgId=1&from=now-1h&to=now&var-namespace=hmpps-electronic-monitoring-map-image-service-dev)
+
 ## Oauth2 Credentials
 
 The service is set up to run with two sets of credentials, each one support a different oauth2 flows.

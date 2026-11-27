@@ -41,4 +41,5 @@ repos:
       - id: trailing-whitespace
       - id: check-json
       - id: check-yaml
+        exclude: ^helm_deploy/.*/templates/
       - id: check-merge-conflict
