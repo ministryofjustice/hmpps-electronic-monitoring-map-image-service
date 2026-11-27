@@ -39,3 +39,5 @@ generic-service:
 generic-prometheus-alerts:
   alertSeverity: hmpps_alerts_nonprod
   businessHoursOnly: true
+
+deploy_grafana_dashboards: true

@@ -1,0 +1,11 @@
+{{ if .Values.deploy_grafana_dashboards }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: map-image-service-grafana-dashboard
+  labels:
+    grafana_dashboard: "map-image-service-grafana-dashboard"
+data:
+  map-image-service-dashboard.json: |
+    {{ .Files.Get "files/map-image-service-grafana-dashboard.json" | nindent 4 }}
+{{ end }}
