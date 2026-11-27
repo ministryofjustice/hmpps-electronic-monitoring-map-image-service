@@ -41,5 +41,6 @@ repos:
       - id: trailing-whitespace
       - id: check-json
       - id: check-yaml
+        # Helm templates contain Go templating syntax and are not valid plain YAML until rendered.
         exclude: ^helm_deploy/.*/templates/
       - id: check-merge-conflict
